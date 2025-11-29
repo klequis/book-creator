@@ -4,7 +4,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/core';
-import type { BookStructure, ChapterMetadata, PartMetadata, FileMetadata } from '../types/book';
+import type { BookStructure, ChapterMetadata, PartMetadata, SectionMetadata } from '../types/book';
 
 export class BookService {
   private cache: BookStructure | null = null;
@@ -29,63 +29,83 @@ export class BookService {
       rootPath
     };
 
-    // Read directory using Tauri command
-    const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
-      path: rootPath
-    });
+    try {
+      // Read directory using Tauri command
+      const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
+        path: rootPath
+      });
 
-    console.log('[BookService] Scanning workspace:', rootPath);
-    console.log('[BookService] Found entries:', entries.map(e => e.name));
+      console.log('[BookService] Scanning workspace:', rootPath);
+      console.log('[BookService] Found entries:', entries.map(e => `${e.name} (${e.isDir ? 'dir' : 'file'})`));
 
-    for (const entry of entries) {
-      if (!entry.isDir) continue;
+      for (const entry of entries) {
+        if (!entry.isDir) continue;
 
-      const { name } = entry;
-      const folderPath = `${rootPath}/${name}`;
+        const { name } = entry;
+        const folderPath = `${rootPath}/${name}`;
 
-      // Check for Introduction
-      if (name === 'Introduction') {
-        console.log('[BookService] Found Introduction folder');
-        structure.introduction = await this.scanChapter(folderPath, name, '00');
-        console.log('[BookService] Introduction scanned:', structure.introduction);
-      }
-      // Check for Parts
-      else if (name.match(/^Part \d+/)) {
-        const part = await this.scanPart(folderPath, name);
-        if (part) {
-          structure.parts.push(part);
+        console.log(`[BookService] Processing folder: ${name}`);
+
+        // Check for Introduction
+        if (name === 'Introduction') {
+          console.log('[BookService] Found Introduction folder');
+          structure.introduction = await this.scanChapter(folderPath, name, '00');
+          console.log('[BookService] Introduction scanned:', structure.introduction);
         }
-      }
-      // Check for Appendices
-      else if (name === 'Appendices') {
-        const appendixChapters = await this.scanAppendices(folderPath);
-        structure.appendices.push(...appendixChapters);
-      }
-      // Standalone chapters (no parts)
-      else if (name.match(/^\d+\s+/)) {
-        const chapterMatch = name.match(/^(\d+)\s+(.+)/);
-        if (chapterMatch) {
-          const chapter = await this.scanChapter(folderPath, name, chapterMatch[1]);
-          // Add as a virtual "part" with single chapter
-          structure.parts.push({
-            folderPath: rootPath,
-            folderName: '',
-            partNum: '',
-            title: '',
-            chapters: [chapter]
-          });
+        // Check for Parts
+        else if (name.match(/^Part \d+/)) {
+          console.log('[BookService] Found Part folder:', name);
+          const part = await this.scanPart(folderPath, name);
+          if (part) {
+            structure.parts.push(part);
+          }
         }
-      }
-    }
-
-    // Sort parts by number
+        // Check for Appendices
+        else if (name === 'Appendices') {
+          console.log('[BookService] Found Appendices folder');
+          const appendixChapters = await this.scanAppendices(folderPath);
+          structure.appendices.push(...appendixChapters);
+        }
+        // Standalone chapters (no parts)
+        else if (name.match(/^\d+\s+/)) {
+          console.log('[BookService] Found standalone chapter:', name);
+          const chapterMatch = name.match(/^(\d+)\s+(.+)/);
+          if (chapterMatch) {
+            console.log('[BookService] Scanning standalone chapter...');
+            const chapter = await this.scanChapter(folderPath, name, chapterMatch[1]);
+            console.log('[BookService] Chapter scanned:', chapter);
+            // Add as a virtual "part" with single chapter
+            structure.parts.push({
+              folderPath: rootPath,
+              folderName: '',
+              partNum: '',
+              title: '',
+              chapters: [chapter]
+            });
+            console.log('[BookService] Added to parts. Total parts:', structure.parts.length);
+          }
+        } else {
+          console.log('[BookService] Skipping folder (no pattern match):', name);
+        }
+      }    // Sort parts by number
     structure.parts.sort((a, b) => {
       const aNum = parseInt(a.partNum || '0');
       const bNum = parseInt(b.partNum || '0');
       return aNum - bNum;
     });
 
+    console.log('[BookService] Final structure:', {
+      parts: structure.parts.length,
+      introduction: structure.introduction ? 'YES' : 'NO',
+      appendices: structure.appendices.length,
+      fullStructure: structure
+    });
+
     return structure;
+    } catch (error) {
+      console.error('[BookService] Error scanning workspace:', error);
+      throw new Error(`Failed to scan book structure: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private async scanPart(folderPath: string, folderName: string): Promise<PartMetadata | null> {
@@ -153,7 +173,7 @@ export class BookService {
     const titleMatch = folderName.match(/^(?:\d+|[A-Z])\s+(.+)/);
     const title = titleMatch ? titleMatch[1] : folderName;
 
-    const files: FileMetadata[] = [];
+    const sections: SectionMetadata[] = [];
     const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
       path: folderPath
     });
@@ -161,14 +181,14 @@ export class BookService {
     for (const entry of entries) {
       if (entry.isDir || !entry.name.endsWith('.md')) continue;
 
-      const fileMetadata = this.parseFileName(folderPath, entry.name, chapterNum);
-      if (fileMetadata) {
-        files.push(fileMetadata);
+      const sectionMetadata = this.parseFileName(folderPath, entry.name, chapterNum);
+      if (sectionMetadata) {
+        sections.push(sectionMetadata);
       }
     }
 
-    // Sort files by their numbering
-    files.sort((a, b) => {
+    // Sort sections by their numbering
+    sections.sort((a, b) => {
       const aKey = `${a.section2Num}-${a.section3Num}-${a.section4Num}`;
       const bKey = `${b.section2Num}-${b.section3Num}-${b.section4Num}`;
       return aKey.localeCompare(bKey);
@@ -179,7 +199,7 @@ export class BookService {
       folderName,
       chapterNum,
       title,
-      files
+      sections
     };
   }
 
@@ -187,7 +207,7 @@ export class BookService {
     folderPath: string,
     fileName: string,
     expectedChapter: string
-  ): FileMetadata | null {
+  ): SectionMetadata | null {
     // Pattern: NN-SS-TT-UU Title.md or NN-SS-TT Title.md
     const match = fileName.match(/^(\d+|[A-Z])-(\d+)-(\d+)(?:-(\d+))?\s+(.+)\.md$/);
     if (!match) return null;

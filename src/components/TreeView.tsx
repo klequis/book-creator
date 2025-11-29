@@ -1,7 +1,8 @@
-import { Component, createSignal, createEffect, For, Show } from 'solid-js';
+import { Component, createSignal, Show } from 'solid-js';
+import { open } from '@tauri-apps/plugin-dialog';
 import type { BookStructure } from '../types/book';
 import { bookService } from '../services/bookService';
-import { PartNode } from './PartNode';
+import { Book } from './Book';
 import './TreeView.css';
 
 export const TreeView: Component = () => {
@@ -10,17 +11,35 @@ export const TreeView: Component = () => {
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
-  const loadBook = async () => {
-    const path = bookPath();
-    if (!path) return;
+  const loadBook = async (path?: string) => {
+    const folderPath = path || bookPath();
+    if (!folderPath) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const result = await bookService.getStructure(path);
+      const result = await bookService.getStructure(folderPath);
+      console.log('Book structure loaded:', JSON.stringify(result, null, 2));
+      
+      if (!result) {
+        setError('Failed to load book structure');
+        setStructure(null);
+        return;
+      }
+      
+      // Temporarily disabled content check to debug
+      // const hasContent = result.parts.length > 0 || result.introduction || result.appendices.length > 0;
+      // if (!hasContent) {
+      //   setError('Book loaded but no content found. Check the book structure.');
+      //   setStructure(null);
+      //   return;
+      // }
+      
       setStructure(result);
+      setBookPath(folderPath);
     } catch (err) {
+      console.error('Load book error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load book');
       setStructure(null);
     } finally {
@@ -28,80 +47,67 @@ export const TreeView: Component = () => {
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      loadBook();
+  const selectFolder = async () => {
+    try {
+      console.log('Opening folder picker...');
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Book Folder',
+      });
+
+      console.log('Selected:', selected);
+      
+      if (selected && typeof selected === 'string') {
+        await loadBook(selected);
+      }
+    } catch (err) {
+      console.error('Folder picker error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to open folder picker');
     }
   };
 
   return (
     <div class="tree-view">
       <div class="tree-header">
-        <input
-          type="text"
-          class="book-path-input"
-          placeholder="Enter book folder path..."
-          value={bookPath()}
-          onInput={(e) => setBookPath(e.currentTarget.value)}
-          onKeyPress={handleKeyPress}
-        />
         <button 
-          class="load-button" 
-          onClick={loadBook}
-          disabled={loading() || !bookPath()}
+          class="browse-button" 
+          onClick={selectFolder}
+          disabled={loading()}
         >
-          {loading() ? 'Loading...' : 'Load Book'}
+          {loading() ? '⏳ Loading...' : '📁 Select Book Folder...'}
         </button>
+        <Show when={bookPath()}>
+          <span class="current-path">{bookPath()}</span>
+        </Show>
       </div>
 
       <Show when={error()}>
         <div class="error-message">{error()}</div>
+        <pre style="color: #ccc; font-size: 11px; padding: 12px; overflow: auto; max-height: 400px;">
+          Debug info will appear here after selecting a folder
+        </pre>
       </Show>
 
-      <Show when={structure()}>
-        {(book) => (
-          <div class="tree-content">
-            {/* Introduction */}
-            <Show when={book().introduction}>
-              {(intro) => (
-                <PartNode 
-                  part={{
-                    folderPath: intro().folderPath,
-                    folderName: 'Introduction',
-                    partNum: '',
-                    title: 'Introduction',
-                    chapters: [intro()]
-                  }}
-                  isIntroduction={true}
-                />
-              )}
-            </Show>
-
-            {/* Parts and Chapters */}
-            <For each={book().parts}>
-              {(part) => <PartNode part={part} />}
-            </For>
-
-            {/* Appendices */}
-            <Show when={book().appendices.length > 0}>
-              <PartNode 
-                part={{
-                  folderPath: book().rootPath,
-                  folderName: 'Appendices',
-                  partNum: '',
-                  title: 'Appendices',
-                  chapters: book().appendices
-                }}
-                isAppendix={true}
-              />
-            </Show>
+      {/* Debug display */}
+      <div style="padding: 12px; color: #858585; font-size: 11px;">
+        Structure loaded: {structure() ? 'YES' : 'NO'}
+        {structure() && (
+          <div>
+            Parts: {structure()!.parts.length} | 
+            Introduction: {structure()!.introduction ? 'YES' : 'NO'} | 
+            Appendices: {structure()!.appendices.length}
           </div>
         )}
+      </div>
+
+      <Show when={structure()}>
+        {(s) => <Book structure={s()} />}
       </Show>
 
       <Show when={!loading() && !structure() && !error()}>
         <div class="empty-state">
-          <p>Enter a book folder path above to get started</p>
+          <p>Click "Select Book Folder" to get started</p>
         </div>
       </Show>
     </div>

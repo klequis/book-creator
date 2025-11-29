@@ -12,33 +12,14 @@
 /* Header */
 .tree-header {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   padding: 12px;
   background-color: #252526;
   border-bottom: 1px solid #3e3e42;
 }
 
-.book-path-input {
-  flex: 1;
-  padding: 6px 10px;
-  background-color: #3c3c3c;
-  border: 1px solid #3e3e42;
-  border-radius: 3px;
-  color: #cccccc;
-  font-size: 13px;
-  outline: none;
-}
-
-.book-path-input:focus {
-  border-color: #007acc;
-  background-color: #4c4c4c;
-}
-
-.book-path-input::placeholder {
-  color: #858585;
-}
-
-.load-button {
+.browse-button {
   padding: 6px 16px;
   background-color: #0e639c;
   border: none;
@@ -47,15 +28,25 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
-.load-button:hover:not(:disabled) {
+.browse-button:hover:not(:disabled) {
   background-color: #1177bb;
 }
 
-.load-button:disabled {
+.browse-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.current-path {
+  flex: 1;
+  color: #858585;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Messages */

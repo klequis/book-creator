@@ -1,9 +1,9 @@
 import { Component } from 'solid-js';
-import type { FileMetadata } from '../types/book';
+import type { SectionMetadata } from '../types/book';
 import './TreeView.css';
 
 interface FileNodeProps {
-  file: FileMetadata;
+  file: SectionMetadata;
 }
 
 export const FileNode: Component<FileNodeProps> = (props) => {

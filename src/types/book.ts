@@ -3,7 +3,7 @@
  * Based on VS Code extension types
  */
 
-export interface FileMetadata {
+export interface SectionMetadata {
   filePath: string;
   fileName: string;
   title: string;
@@ -20,7 +20,7 @@ export interface ChapterMetadata {
   folderName: string;
   chapterNum: string;
   title: string;
-  files: FileMetadata[];
+  sections: SectionMetadata[];
 }
 
 export interface PartMetadata {

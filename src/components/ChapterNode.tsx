@@ -29,12 +29,12 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
       <div class="chapter-header" onClick={toggleExpand}>
         <span class="expand-icon">{expanded() ? '▼' : '▶'}</span>
         <span class="chapter-title">{getDisplayTitle()}</span>
-        <span class="file-count">({props.chapter.files.length})</span>
+        <span class="file-count">({props.chapter.sections.length})</span>
       </div>
 
       <Show when={expanded()}>
         <div class="files-container">
-          <For each={props.chapter.files}>
+          <For each={props.chapter.sections}>
             {(file) => <FileNode file={file} />}
           </For>
         </div>
