@@ -20,7 +20,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
     props.onZoomChange(newZoom);
     try {
       if (!store) {
-        store = await load('settings.json', { autoSave: false });
+        store = await load('settings.json');
       }
       await store.set('treeZoom', newZoom);
       await store.save();
@@ -49,7 +49,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   // Load saved book path on mount
   onMount(async () => {
     try {
-      store = await load('settings.json', { autoSave: false });
+      store = await load('settings.json');
       const savedPath = await store.get<string>('lastBookPath');
       if (savedPath) {
         console.log('Restored book path:', savedPath);
@@ -78,7 +78,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       // Save the path when successfully loaded
       try {
         if (!store) {
-          store = await load('settings.json', { autoSave: false });
+          store = await load('settings.json');
         }
         await store.set('lastBookPath', path);
         await store.save();

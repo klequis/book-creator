@@ -44,3 +44,16 @@ html, body, #root {
   overflow: hidden;
 }
 
+.editor-pane {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  border-right: 1px solid #2d2d2d;
+}
+
+.preview-pane {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+

@@ -15,7 +15,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
   // Load saved zoom level
   onMount(async () => {
     try {
-      store = await load('settings.json', { autoSave: false });
+      store = await load('settings.json');
       const savedZoom = await store.get<number>('previewZoom');
       if (savedZoom) {
         setZoom(savedZoom);
@@ -28,7 +28,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
   const saveZoom = async (newZoom: number) => {
     try {
       if (!store) {
-        store = await load('settings.json', { autoSave: false });
+        store = await load('settings.json');
       }
       await store.set('previewZoom', newZoom);
       await store.save();

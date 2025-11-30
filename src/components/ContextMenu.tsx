@@ -1,4 +1,4 @@
-import { Component, Show, createSignal, onMount, onCleanup } from 'solid-js';
+import { Component, onMount, onCleanup } from 'solid-js';
 import './ContextMenu.css';
 
 interface ContextMenuProps {

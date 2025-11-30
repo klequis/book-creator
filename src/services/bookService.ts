@@ -161,7 +161,7 @@ export class BookService {
     const appendixSections: Section[] = [];
     
     const entries: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
-      path: chapterPath
+      path: folderPath
     });
 
     for (const entry of entries) {

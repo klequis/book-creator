@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js';
 import { TreeView } from "./components/TreeView";
 import { MarkdownPreview } from "./components/MarkdownPreview";
+import { MarkdownEditor } from "./components/MarkdownEditor";
 import "./App.css";
 
 function App() {
@@ -17,7 +18,12 @@ function App() {
           <TreeView onFileSelect={setSelectedFile} onZoomChange={setTreeZoom} />
         </div>
         <div class="main-content">
-          <MarkdownPreview filePath={selectedFile()} />
+          <div class="editor-pane">
+            <MarkdownEditor filePath={selectedFile()} />
+          </div>
+          <div class="preview-pane">
+            <MarkdownPreview filePath={selectedFile()} />
+          </div>
         </div>
       </div>
     </div>
