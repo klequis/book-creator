@@ -104,6 +104,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
             }, 1000);
           }
         }),
+        EditorView.lineWrapping,
         EditorView.theme({
           '&': {
             fontSize: `${zoom()}%`,
@@ -112,6 +113,12 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
           '.cm-scroller': {
             fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
             lineHeight: '1.6'
+          },
+          '.cm-content': {
+            color: '#e8e8e8'
+          },
+          '.cm-heading': {
+            color: '#ff6b6b'
           }
         })
       ]
