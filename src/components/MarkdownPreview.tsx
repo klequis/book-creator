@@ -59,81 +59,74 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
     async ([path, resourcesPath]) => {
       if (!path) return null;
       try {
-        const markdown: string = await invoke('read_file', { path });
+        let markdown: string = await invoke('read_file', { path });
         
-        // Configure marked to use hooks for image processing
-        marked.use({
-          hooks: {
-            async postprocess(html) {
-              if (!resourcesPath) return html;
-              
-              // Find all image tags
-              const imgRegex = /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/gi;
-              const matches = Array.from(html.matchAll(imgRegex));
-              
-              // Process each image
-              for (const match of matches) {
-                const [fullMatch, before, src, after] = match;
-                
-                // Skip absolute URLs
-                if (src.match(/^(https?:\/\/|\/)/)) continue;
-                
-                let fullPath: string;
-                
-                // Check if it's a relative path with ../ or ./
-                if (src.includes('../') || src.includes('./')) {
-                  // Resolve relative to the markdown file's directory
-                  const fileDir = path.substring(0, path.lastIndexOf('/'));
-                  fullPath = `${fileDir}/${src}`;
-                  // Normalize the path (remove .. and .)
-                  const parts = fullPath.split('/');
-                  const normalized: string[] = [];
-                  for (const part of parts) {
-                    if (part === '..') {
-                      normalized.pop();
-                    } else if (part !== '.' && part !== '') {
-                      normalized.push(part);
-                    }
-                  }
-                  fullPath = normalized.join('/');
-                } else {
-                  // Assume it's just a filename in the resources folder
-                  fullPath = `${resourcesPath}/${src}`;
-                }
-                
-                console.log(`Image resolution:`);
-                console.log(`  Original src: ${src}`);
-                console.log(`  Full path: ${fullPath}`);
-                
-                try {
-                  // Read the image file as base64
-                  const base64Data: string = await invoke('read_binary_file', { path: fullPath });
-                  
-                  // Determine MIME type from extension
-                  const ext = fullPath.split('.').pop()?.toLowerCase();
-                  const mimeTypes: { [key: string]: string } = {
-                    'png': 'image/png',
-                    'jpg': 'image/jpeg',
-                    'jpeg': 'image/jpeg',
-                    'gif': 'image/gif',
-                    'svg': 'image/svg+xml',
-                    'webp': 'image/webp'
-                  };
-                  const mimeType = mimeTypes[ext || ''] || 'image/png';
-                  
-                  const dataUrl = `data:${mimeType};base64,${base64Data}`;
-                  console.log(`  Data URL created (${base64Data.length} bytes)`);
-                  
-                  html = html.replace(fullMatch, `<img ${before}src="${dataUrl}"${after}>`);
-                } catch (error) {
-                  console.error(`Failed to load image ${fullPath}:`, error);
+        // Process images before converting markdown to HTML
+        if (resourcesPath) {
+          // Find all markdown image references: ![alt](src)
+          const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+          const matches = Array.from(markdown.matchAll(imgRegex));
+          
+          // Process each image
+          for (const match of matches) {
+            const [fullMatch, alt, src] = match;
+            
+            // Skip absolute URLs
+            if (src.match(/^(https?:\/\/|\/)/)) continue;
+            
+            let fullPath: string;
+            
+            // Check if it's a relative path with ../ or ./
+            if (src.includes('../') || src.includes('./')) {
+              // Resolve relative to the markdown file's directory
+              const fileDir = path.substring(0, path.lastIndexOf('/'));
+              fullPath = `${fileDir}/${src}`;
+              // Normalize the path (remove .. and .)
+              const parts = fullPath.split('/');
+              const normalized: string[] = [];
+              for (const part of parts) {
+                if (part === '..') {
+                  normalized.pop();
+                } else if (part !== '.' && part !== '') {
+                  normalized.push(part);
                 }
               }
+              fullPath = '/' + normalized.join('/');
+            } else {
+              // Assume it's just a filename in the resources folder
+              fullPath = `${resourcesPath}/${src}`;
+            }
+            
+            console.log(`Image resolution:`);
+            console.log(`  Original src: ${src}`);
+            console.log(`  Full path: ${fullPath}`);
+            
+            try {
+              // Read the image file as base64
+              const base64Data: string = await invoke('read_binary_file', { path: fullPath });
               
-              return html;
+              // Determine MIME type from extension
+              const ext = fullPath.split('.').pop()?.toLowerCase();
+              const mimeTypes: { [key: string]: string } = {
+                'png': 'image/png',
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'gif': 'image/gif',
+                'svg': 'image/svg+xml',
+                'webp': 'image/webp'
+              };
+              const mimeType = mimeTypes[ext || ''] || 'image/png';
+              
+              const dataUrl = `data:${mimeType};base64,${base64Data}`;
+              console.log(`  Data URL created (${base64Data.length} bytes)`);
+              
+              // Replace the markdown image with the data URL
+              markdown = markdown.replace(fullMatch, `![${alt}](${dataUrl})`);
+            } catch (error) {
+              console.error(`Failed to load image ${fullPath}:`, error);
             }
           }
-        });
+        }
         
         const html = await marked(markdown);
         return html;
