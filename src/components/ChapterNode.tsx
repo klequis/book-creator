@@ -6,6 +6,7 @@ import './TreeView.css';
 interface ChapterNodeProps {
   chapter: Chapter;
   sections: Section[];
+  onFileSelect: (filePath: string | null) => void;
 }
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
@@ -36,7 +37,7 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
       <Show when={expanded()}>
         <div class="files-container">
           <For each={props.sections}>
-            {(file) => <FileNode file={file} />}
+            {(file) => <FileNode file={file} onFileSelect={props.onFileSelect} />}
           </For>
         </div>
       </Show>

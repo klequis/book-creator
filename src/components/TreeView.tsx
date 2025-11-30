@@ -4,7 +4,11 @@ import { bookService } from '../services/bookService';
 import { Book } from './Book';
 import './TreeView.css';
 
-export const TreeView: Component = () => {
+interface TreeViewProps {
+  onFileSelect: (filePath: string | null) => void;
+}
+
+export const TreeView: Component<TreeViewProps> = (props) => {
   const [bookPath, setBookPath] = createSignal<string>('');
   
   const [structure] = createResource(bookPath, async (path) => {
@@ -81,7 +85,7 @@ export const TreeView: Component = () => {
       </div>
 
       <Show when={structure()}>
-        {(s) => <Book structure={s()} />}
+        {(s) => <Book structure={s()} onFileSelect={props.onFileSelect} />}
       </Show>
 
       <Show when={!structure.loading && !structure() && !structure.error}>

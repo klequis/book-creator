@@ -4,6 +4,7 @@ import { PartNode } from './PartNode';
 
 interface BookProps {
   structure: BookStructure;
+  onFileSelect: (filePath: string | null) => void;
 }
 
 export const Book: Component<BookProps> = (props) => {
@@ -52,6 +53,7 @@ export const Book: Component<BookProps> = (props) => {
               chapters={[intro()]}
               sections={introSections}
               isIntroduction={true}
+              onFileSelect={props.onFileSelect}
             />
           );
         }}
@@ -63,7 +65,7 @@ export const Book: Component<BookProps> = (props) => {
           console.log(`[Book] Rendering part ${index()}:`, part);
           const partChapters = getChaptersForPart(part.id);
           const allSections = partChapters.flatMap(ch => getSectionsForChapter(ch.id));
-          return <PartNode part={part} chapters={partChapters} sections={allSections} />;
+          return <PartNode part={part} chapters={partChapters} sections={allSections} onFileSelect={props.onFileSelect} />;
         }}
       </For>
 
@@ -84,6 +86,7 @@ export const Book: Component<BookProps> = (props) => {
                 }}
                 chapters={[chapter]}
                 sections={chapterSections}
+                onFileSelect={props.onFileSelect}
               />
             );
           }}
@@ -103,6 +106,7 @@ export const Book: Component<BookProps> = (props) => {
           chapters={appendices()}
           sections={appendices().flatMap(ch => getSectionsForChapter(ch.id))}
           isAppendix={true}
+          onFileSelect={props.onFileSelect}
         />
       </Show>
     </div>

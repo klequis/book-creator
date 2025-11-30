@@ -4,12 +4,12 @@ import './TreeView.css';
 
 interface FileNodeProps {
   file: Section;
+  onFileSelect: (filePath: string | null) => void;
 }
 
 export const FileNode: Component<FileNodeProps> = (props) => {
   const handleClick = () => {
-    console.log('File clicked:', props.file.filePath);
-    // TODO: Open file in editor or external app
+    props.onFileSelect(props.file.filePath);
   };
 
   const getLevelClass = () => {
