@@ -1,4 +1,4 @@
-import { Component, createResource, Show } from 'solid-js';
+import { Component, createResource, Show, createSignal } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { marked } from 'marked';
 import './MarkdownPreview.css';
@@ -8,6 +8,11 @@ interface MarkdownPreviewProps {
 }
 
 export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
+  const [zoom, setZoom] = createSignal(100);
+
+  const zoomIn = () => setZoom(Math.min(zoom() + 10, 200));
+  const zoomOut = () => setZoom(Math.max(zoom() - 10, 50));
+  const resetZoom = () => setZoom(100);
   const [content] = createResource(
     () => props.filePath,
     async (path) => {
@@ -54,8 +59,13 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
         <Show when={content() && !content.loading && !content.error}>
           <div class="preview-header">
             <div class="preview-file-path">{props.filePath}</div>
+            <div class="zoom-controls">
+              <button onClick={zoomOut} title="Zoom out">−</button>
+              <button onClick={resetZoom} title="Reset zoom">{zoom()}%</button>
+              <button onClick={zoomIn} title="Zoom in">+</button>
+            </div>
           </div>
-          <div class="preview-content" innerHTML={content() || ''}></div>
+          <div class="preview-content" style={{ "font-size": `${zoom()}%` }} innerHTML={content() || ''}></div>
         </Show>
       </Show>
     </div>

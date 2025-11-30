@@ -11,7 +11,12 @@ interface TreeViewProps {
 
 export const TreeView: Component<TreeViewProps> = (props) => {
   const [bookPath, setBookPath] = createSignal<string>('');
+  const [zoom, setZoom] = createSignal(100);
   let store: Awaited<ReturnType<typeof load>> | null = null;
+
+  const zoomIn = () => setZoom(Math.min(zoom() + 10, 200));
+  const zoomOut = () => setZoom(Math.max(zoom() - 10, 50));
+  const resetZoom = () => setZoom(100);
   
   // Load saved book path on mount
   onMount(async () => {
@@ -72,7 +77,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   };
 
   return (
-    <div class="tree-view">
+    <div class="tree-view" style={{ "font-size": `${zoom()}%` }}>
       <div class="tree-header">
         <button 
           class="browse-button" 
@@ -81,6 +86,11 @@ export const TreeView: Component<TreeViewProps> = (props) => {
         >
           {structure.loading ? '⏳ Loading...' : '📁 Select Book Folder...'}
         </button>
+        <div class="zoom-controls">
+          <button onClick={zoomOut} title="Zoom out">−</button>
+          <button onClick={resetZoom} title="Reset zoom">{zoom()}%</button>
+          <button onClick={zoomIn} title="Zoom in">+</button>
+        </div>
         <Show when={bookPath()}>
           <span class="current-path">{bookPath()}</span>
         </Show>

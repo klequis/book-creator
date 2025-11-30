@@ -3,7 +3,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: #1e1e1e;
+  color: #d4d4d4;
 }
 
 .preview-placeholder {
@@ -11,7 +12,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #999;
+  color: #666;
 }
 
 .placeholder-content {
@@ -21,6 +22,7 @@
 .placeholder-content svg {
   margin: 0 auto 1rem;
   opacity: 0.5;
+  stroke: #666;
 }
 
 .placeholder-content p {
@@ -38,7 +40,7 @@
 
 .preview-error {
   flex-direction: column;
-  color: #d32f2f;
+  color: #f48771;
 }
 
 .preview-error h3 {
@@ -47,17 +49,47 @@
 
 .preview-header {
   padding: 1rem;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f5f5f5;
+  border-bottom: 1px solid #2d2d2d;
+  background: #252526;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
 .preview-file-path {
   font-size: 0.85rem;
-  color: #666;
+  color: #888;
   font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+
+.zoom-controls {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.zoom-controls button {
+  background: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #555;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border-radius: 3px;
+  min-width: 32px;
+}
+
+.zoom-controls button:hover {
+  background: #505050;
+}
+
+.zoom-controls button:active {
+  background: #2d2d2d;
 }
 
 .preview-content {
@@ -77,19 +109,22 @@
   margin: 1.5rem 0 1rem;
   font-weight: 600;
   line-height: 1.3;
+  color: #e0e0e0;
 }
 
-.preview-content h1 { font-size: 2rem; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.5rem; }
+.preview-content h1 { font-size: 2rem; border-bottom: 2px solid #3e3e3e; padding-bottom: 0.5rem; }
 .preview-content h2 { font-size: 1.5rem; }
 .preview-content h3 { font-size: 1.25rem; }
 .preview-content h4 { font-size: 1.1rem; }
 
 .preview-content p {
   margin: 1rem 0;
+  color: #d4d4d4;
 }
 
 .preview-content code {
-  background: #f5f5f5;
+  background: #2d2d2d;
+  color: #ce9178;
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
@@ -97,22 +132,25 @@
 }
 
 .preview-content pre {
-  background: #f5f5f5;
+  background: #2d2d2d;
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
   margin: 1rem 0;
+  border: 1px solid #3e3e3e;
 }
 
 .preview-content pre code {
   background: none;
   padding: 0;
+  color: #d4d4d4;
 }
 
 .preview-content ul,
 .preview-content ol {
   margin: 1rem 0;
   padding-left: 2rem;
+  color: #d4d4d4;
 }
 
 .preview-content li {
@@ -120,20 +158,21 @@
 }
 
 .preview-content blockquote {
-  border-left: 4px solid #e0e0e0;
+  border-left: 4px solid #3e3e3e;
   padding-left: 1rem;
   margin: 1rem 0;
-  color: #666;
+  color: #888;
   font-style: italic;
 }
 
 .preview-content a {
-  color: #1976d2;
+  color: #4fc3f7;
   text-decoration: none;
 }
 
 .preview-content a:hover {
   text-decoration: underline;
+  color: #81d4fa;
 }
 
 .preview-content img {
@@ -150,18 +189,19 @@
 
 .preview-content th,
 .preview-content td {
-  border: 1px solid #e0e0e0;
+  border: 1px solid #3e3e3e;
   padding: 0.5rem;
   text-align: left;
+  color: #d4d4d4;
 }
 
 .preview-content th {
-  background: #f5f5f5;
+  background: #2d2d2d;
   font-weight: 600;
 }
 
 .preview-content hr {
   border: none;
-  border-top: 2px solid #e0e0e0;
+  border-top: 2px solid #3e3e3e;
   margin: 2rem 0;
 }
