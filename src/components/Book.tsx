@@ -22,9 +22,12 @@ export const Book: Component<BookProps> = (props) => {
     props.structure.chapters.filter(ch => ch.isAppendix)
   );
 
-  const standaloneChapters = createMemo(() => 
-    props.structure.chapters.filter(ch => !ch.bookPartId && !ch.isIntroduction && !ch.isAppendix)
-  );
+  const standaloneChapters = createMemo(() => {
+    const chapters = props.structure.chapters.filter(ch => !ch.bookPartId && !ch.isIntroduction && !ch.isAppendix);
+    // Sort by chapter number
+    chapters.sort((a, b) => parseInt(a.chapterNum) - parseInt(b.chapterNum));
+    return chapters;
+  });
 
   // Helper to get chapters for a part
   const getChaptersForPart = (partId: string) => 
@@ -46,13 +49,12 @@ export const Book: Component<BookProps> = (props) => {
               part={{
                 id: 'intro-part',
                 folderPath: intro().folderPath,
-                folderName: 'Introduction',
+                folderName: '',
                 partNum: '',
-                title: 'Introduction'
+                title: ''
               }}
               chapters={[intro()]}
               sections={introSections}
-              isIntroduction={true}
               onFileSelect={props.onFileSelect}
             />
           );

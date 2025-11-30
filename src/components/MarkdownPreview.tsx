@@ -1,6 +1,7 @@
-import { Component, createResource, Show, createSignal } from 'solid-js';
+import { Component, createResource, Show, createSignal, onMount } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { marked } from 'marked';
+import { load } from '@tauri-apps/plugin-store';
 import './MarkdownPreview.css';
 
 interface MarkdownPreviewProps {
@@ -8,11 +9,50 @@ interface MarkdownPreviewProps {
 }
 
 export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
-  const [zoom, setZoom] = createSignal(100);
+  const [zoom, setZoom] = createSignal(180);
+  let store: Awaited<ReturnType<typeof load>> | null = null;
 
-  const zoomIn = () => setZoom(Math.min(zoom() + 10, 200));
-  const zoomOut = () => setZoom(Math.max(zoom() - 10, 50));
-  const resetZoom = () => setZoom(100);
+  // Load saved zoom level
+  onMount(async () => {
+    try {
+      store = await load('settings.json', { autoSave: false });
+      const savedZoom = await store.get<number>('previewZoom');
+      if (savedZoom) {
+        setZoom(savedZoom);
+      }
+    } catch (err) {
+      console.error('Failed to load preview zoom:', err);
+    }
+  });
+
+  const saveZoom = async (newZoom: number) => {
+    try {
+      if (!store) {
+        store = await load('settings.json', { autoSave: false });
+      }
+      await store.set('previewZoom', newZoom);
+      await store.save();
+    } catch (err) {
+      console.error('Failed to save preview zoom:', err);
+    }
+  };
+
+  const zoomIn = () => {
+    const newZoom = Math.min(zoom() + 10, 300);
+    setZoom(newZoom);
+    saveZoom(newZoom);
+  };
+  
+  const zoomOut = () => {
+    const newZoom = Math.max(zoom() - 10, 50);
+    setZoom(newZoom);
+    saveZoom(newZoom);
+  };
+  
+  const resetZoom = () => {
+    setZoom(180);
+    saveZoom(180);
+  };
   const [content] = createResource(
     () => props.filePath,
     async (path) => {

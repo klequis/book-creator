@@ -7,16 +7,43 @@ import './TreeView.css';
 
 interface TreeViewProps {
   onFileSelect: (filePath: string | null) => void;
+  onZoomChange: (zoom: number) => void;
 }
 
 export const TreeView: Component<TreeViewProps> = (props) => {
   const [bookPath, setBookPath] = createSignal<string>('');
-  const [zoom, setZoom] = createSignal(100);
+  const [zoom, setZoom] = createSignal(180);
   let store: Awaited<ReturnType<typeof load>> | null = null;
 
-  const zoomIn = () => setZoom(Math.min(zoom() + 10, 200));
-  const zoomOut = () => setZoom(Math.max(zoom() - 10, 50));
-  const resetZoom = () => setZoom(100);
+  const saveZoom = async (newZoom: number) => {
+    props.onZoomChange(newZoom);
+    try {
+      if (!store) {
+        store = await load('settings.json', { autoSave: false });
+      }
+      await store.set('treeZoom', newZoom);
+      await store.save();
+    } catch (err) {
+      console.error('Failed to save tree zoom:', err);
+    }
+  };
+
+  const zoomIn = () => {
+    const newZoom = Math.min(zoom() + 10, 300);
+    setZoom(newZoom);
+    saveZoom(newZoom);
+  };
+  
+  const zoomOut = () => {
+    const newZoom = Math.max(zoom() - 10, 50);
+    setZoom(newZoom);
+    saveZoom(newZoom);
+  };
+  
+  const resetZoom = () => {
+    setZoom(180);
+    saveZoom(180);
+  };
   
   // Load saved book path on mount
   onMount(async () => {
@@ -26,6 +53,13 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       if (savedPath) {
         console.log('Restored book path:', savedPath);
         setBookPath(savedPath);
+      }
+      const savedZoom = await store.get<number>('treeZoom');
+      if (savedZoom) {
+        setZoom(savedZoom);
+        props.onZoomChange(savedZoom);
+      } else {
+        props.onZoomChange(zoom());
       }
     } catch (err) {
       console.error('Failed to load saved path:', err);
@@ -77,7 +111,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   };
 
   return (
-    <div class="tree-view" style={{ "font-size": `${zoom()}%` }}>
+    <div class="tree-view">
       <div class="tree-header">
         <button 
           class="browse-button" 
@@ -123,15 +157,17 @@ export const TreeView: Component<TreeViewProps> = (props) => {
         )}
       </div>
 
-      <Show when={structure()}>
-        {(s) => <Book structure={s()} onFileSelect={props.onFileSelect} />}
-      </Show>
+      <div class="tree-content-wrapper" style={{ "font-size": `${zoom()}%` }}>
+        <Show when={structure()}>
+          {(s) => <Book structure={s()} onFileSelect={props.onFileSelect} />}
+        </Show>
 
-      <Show when={!structure.loading && !structure() && !structure.error}>
-        <div class="empty-state">
-          <p>Click "Select Book Folder" to get started</p>
-        </div>
-      </Show>
+        <Show when={!structure.loading && !structure() && !structure.error}>
+          <div class="empty-state">
+            <p>Click "Select Book Folder" to get started</p>
+          </div>
+        </Show>
+      </div>
     </div>
   );
 };
