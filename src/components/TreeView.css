@@ -69,8 +69,8 @@
 .current-path {
   flex: 1;
   width: 100%;
-  color: #858585;
-  font-size: 12px;
+  color: #b0b0b0;
+  font-size: 0.95rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -167,6 +167,7 @@
   width: 16px;
   font-size: 0.77em;
   color: #858585;
+  margin-right: 0.25rem;
 }
 
 .files-container {

@@ -1,13 +1,19 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 import { TreeView } from "./components/TreeView";
 import { MarkdownPreview } from "./components/MarkdownPreview";
 import { MarkdownEditor } from "./components/MarkdownEditor";
+import { restoreWindowState, setupWindowStateListeners } from "./utils/windowManager";
 import "./App.css";
 
 function App() {
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null);
   const [treeZoom, setTreeZoom] = createSignal(180);
   const [resourcesPath, setResourcesPath] = createSignal<string | null>(null);
+
+  onMount(() => {
+    restoreWindowState();
+    setupWindowStateListeners();
+  });
 
   // Calculate sidebar width based on zoom (base 300px at 100%)
   const sidebarWidth = () => Math.round((300 * treeZoom()) / 100);

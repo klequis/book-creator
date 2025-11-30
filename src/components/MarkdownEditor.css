@@ -59,8 +59,8 @@
 }
 
 .editor-file-path {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.95rem;
+  color: #b0b0b0;
   font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -77,7 +77,7 @@
 }
 
 .save-status {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   min-width: 120px;
 }
 
@@ -86,7 +86,7 @@
 }
 
 .save-status .saved {
-  color: #888;
+  color: #b0b0b0;
 }
 
 .save-button {

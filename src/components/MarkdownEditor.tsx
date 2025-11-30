@@ -16,6 +16,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
   const [content, setContent] = createSignal('');
   const [isSaving, setIsSaving] = createSignal(false);
   const [lastSaved, setLastSaved] = createSignal<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = createSignal(false);
   const [zoom, setZoom] = createSignal(180);
   let store: Awaited<ReturnType<typeof load>> | null = null;
   let saveTimeout: number | undefined;
@@ -94,6 +95,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
           if (update.docChanged) {
             const newContent = update.state.doc.toString();
             setContent(newContent);
+            setHasUnsavedChanges(true);
             
             // Auto-save after 1 second of no typing
             if (saveTimeout) {
@@ -138,6 +140,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
     
     if (editorContainer && initialContent && !fileContent.loading) {
       setContent(initialContent);
+      setHasUnsavedChanges(false);
       initializeEditor(editorContainer, initialContent);
     }
   });
@@ -171,6 +174,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
         contents: content()
       });
       setLastSaved(new Date());
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Failed to save file:', error);
       alert(`Failed to save: ${error}`);
@@ -181,6 +185,10 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  const shortenPath = (path: string) => {
+    return path.replace(/^\/home\/[^/]+\//, '~/');
   };
 
   return (
@@ -210,7 +218,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
         </Show>
         <Show when={!fileContent.loading && !fileContent.error}>
           <div class="editor-header">
-            <div class="editor-file-path">{props.filePath}</div>
+            <div class="editor-file-path">{shortenPath(props.filePath!)}</div>
             <div class="editor-controls">
               <div class="save-status">
                 <Show when={isSaving()}>
@@ -220,7 +228,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
                   <span class="saved">Saved at {formatTime(lastSaved()!)}</span>
                 </Show>
               </div>
-              <button onClick={saveFile} disabled={isSaving()} class="save-button">
+              <button onClick={saveFile} disabled={isSaving() || !hasUnsavedChanges()} class="save-button">
                 Save
               </button>
               <div class="zoom-controls">

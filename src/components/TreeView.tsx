@@ -133,9 +133,6 @@ export const TreeView: Component<TreeViewProps> = (props) => {
           <button onClick={resetZoom} title="Reset zoom">{zoom()}%</button>
           <button onClick={zoomIn} title="Zoom in">+</button>
         </div>
-        <Show when={bookPath()}>
-          <span class="current-path">{bookPath()}</span>
-        </Show>
       </div>
 
       <Show when={structure.error}>

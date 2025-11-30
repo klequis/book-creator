@@ -54,6 +54,11 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
     setZoom(180);
     saveZoom(180);
   };
+
+  const shortenPath = (path: string) => {
+    return path.replace(/^\/home\/[^/]+\//, '~/');
+  };
+  
   const [content] = createResource(
     () => [props.filePath, props.resourcesPath] as const,
     async ([path, resourcesPath]) => {
@@ -167,7 +172,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
         </Show>
         <Show when={content() && !content.loading && !content.error}>
           <div class="preview-header">
-            <div class="preview-file-path">{props.filePath}</div>
+            <div class="preview-file-path">{shortenPath(props.filePath!)}</div>
             <div class="zoom-controls">
               <button onClick={zoomOut} title="Zoom out">−</button>
               <button onClick={resetZoom} title="Reset zoom">{zoom()}%</button>
