@@ -15,11 +15,14 @@
     └── 2. Gettin Started
 ```
 
-## HTML
-
-```
-<div class="part-node"><div class="part-header"><span class="expand-icon">▼</span><span class="part-title">Introduction</span></div><div class="chapters-container"><div class="chapter-node"><div class="chapter-header"><span class="expand-icon">▼</span><span class="chapter-title">0. Introduction</span><span class="file-count">(3<!---->)</span></div><div class="files-container"><div class="file-node file-level-0"><span class="file-icon">📄</span><span class="file-label">0. Introduction</span></div><div class="file-node file-level-1"><span class="file-icon">📄</span><span class="file-label">  0.1. What is SolidStart</span></div><div class="file-node file-level-1"><span class="file-icon">📄</span><span class="file-label">  0.2. What is Routing</span></div></div></div></div></div>
-```
+├── 0. Introduction (zooms)
+│   ├── 0. Introduction
+│   ├── 0.1. What is SolidStart
+│   └── 0.2 What is Routing
+├── 1. The Basics  (zooms)
+│   └── 1. The Basics
+└── 2. Gettin Started  (zooms)
+    └── 2. Gettin Started
 
 ## Structure Breakdown
 
