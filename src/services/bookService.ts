@@ -29,15 +29,15 @@ export class BookService {
 
     try {
       // Read directory using Tauri command
-      const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
+      const entries: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
         path: rootPath
       });
 
       console.log('[BookService] Scanning workspace:', rootPath);
-      console.log('[BookService] Found entries:', entries.map(e => `${e.name} (${e.isDir ? 'dir' : 'file'})`));
+      console.log('[BookService] Found entries:', entries.map(e => `${e.name} (${e.is_dir ? 'dir' : 'file'})`));
 
       for (const entry of entries) {
-        if (!entry.isDir) continue;
+        if (!entry.is_dir) continue;
 
         const { name } = entry;
         const folderPath = `${rootPath}/${name}`;
@@ -123,12 +123,12 @@ export class BookService {
     const partChapters: Chapter[] = [];
     const partSections: Section[] = [];
 
-    const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
+    const entries: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
       path: folderPath
     });
 
     for (const entry of entries) {
-      if (!entry.isDir) continue;
+      if (!entry.is_dir) continue;
 
       const chapterMatch = entry.name.match(/^(\d+)\s+(.+)/);
       if (chapterMatch) {
@@ -160,12 +160,12 @@ export class BookService {
     const appendixChapters: Chapter[] = [];
     const appendixSections: Section[] = [];
     
-    const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
-      path: folderPath
+    const entries: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
+      path: chapterPath
     });
 
     for (const entry of entries) {
-      if (!entry.isDir) continue;
+      if (!entry.is_dir) continue;
 
       const appendixMatch = entry.name.match(/^([A-Z])\s+(.+)/);
       if (appendixMatch) {
@@ -198,12 +198,12 @@ export class BookService {
     const chapterId = isIntroduction ? 'intro' : isAppendix ? `appendix-${chapterNum}` : `chapter-${chapterNum}`;
 
     const chapterSections: Section[] = [];
-    const entries: Array<{ name: string; isDir: boolean }> = await invoke('read_directory', {
+    const entries: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
       path: folderPath
     });
 
     for (const entry of entries) {
-      if (entry.isDir || !entry.name.endsWith('.md')) continue;
+      if (entry.is_dir || !entry.name.endsWith('.md')) continue;
 
       const section = this.parseFileName(folderPath, entry.name, chapterNum, chapterId);
       if (section) {
