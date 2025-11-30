@@ -1,6 +1,7 @@
 import { Component, For, Show, createMemo } from 'solid-js';
 import type { Book as BookStructure } from '../types/book';
 import { PartNode } from './PartNode';
+import { ResourcesNode } from './ResourcesNode';
 import { bookService } from '../services/bookService';
 
 interface BookProps {
@@ -119,6 +120,14 @@ export const Book: Component<BookProps> = (props) => {
           isAppendix={true}
           onFileSelect={props.onFileSelect}
           onSectionsReordered={handleSectionsReordered}
+        />
+      </Show>
+
+      {/* Resources */}
+      <Show when={props.structure.resourcesPath}>
+        <ResourcesNode 
+          folderPath={props.structure.resourcesPath!}
+          onFileSelect={props.onFileSelect}
         />
       </Show>
     </div>

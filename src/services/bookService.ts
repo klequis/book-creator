@@ -26,6 +26,7 @@ export class BookService {
     const bookParts: BookPart[] = [];
     const chapters: Chapter[] = [];
     const sections: Section[] = [];
+    let resourcesPath: string | null = null;
 
     try {
       // Read directory using Tauri command
@@ -43,6 +44,13 @@ export class BookService {
         const folderPath = `${rootPath}/${name}`;
 
         console.log(`[BookService] Processing folder: ${name}`);
+
+        // Check for resources folder
+        if (name === 'resources') {
+          console.log('[BookService] Found resources folder');
+          resourcesPath = folderPath;
+          continue;
+        }
 
         // Check for Introduction
         if (name === 'Introduction') {
@@ -95,11 +103,13 @@ export class BookService {
       console.log('[BookService] Final structure:', {
         bookParts: bookParts.length,
         chapters: chapters.length,
-        sections: sections.length
+        sections: sections.length,
+        resourcesPath
       });
 
       return {
         rootPath,
+        resourcesPath,
         bookParts,
         chapters,
         sections

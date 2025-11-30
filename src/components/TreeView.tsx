@@ -8,6 +8,7 @@ import './TreeView.css';
 interface TreeViewProps {
   onFileSelect: (filePath: string | null) => void;
   onZoomChange: (zoom: number) => void;
+  onResourcesPathChange: (resourcesPath: string | null) => void;
 }
 
 export const TreeView: Component<TreeViewProps> = (props) => {
@@ -74,6 +75,9 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       console.log('Fetching book structure for:', path);
       const result = await bookService.getStructure(path);
       console.log('Book structure loaded:', JSON.stringify(result, null, 2));
+      
+      // Notify parent of resources path
+      props.onResourcesPathChange(result?.resourcesPath || null);
       
       // Save the path when successfully loaded
       try {

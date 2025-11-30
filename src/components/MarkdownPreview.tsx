@@ -2,10 +2,12 @@ import { Component, createResource, Show, createSignal, onMount } from 'solid-js
 import { invoke } from '@tauri-apps/api/core';
 import { marked } from 'marked';
 import { load } from '@tauri-apps/plugin-store';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import './MarkdownPreview.css';
 
 interface MarkdownPreviewProps {
   filePath: string | null;
+  resourcesPath: string | null;
 }
 
 export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
@@ -59,6 +61,30 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
       if (!path) return null;
       try {
         const markdown: string = await invoke('read_file', { path });
+        
+        // Configure marked to use hooks for image processing
+        marked.use({
+          hooks: {
+            postprocess(html) {
+              if (!props.resourcesPath) return html;
+              
+              // Replace relative image paths with converted asset URLs
+              return html.replace(
+                /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/gi,
+                (match, before, src, after) => {
+                  // If src is relative (doesn't start with http:// or https:// or /)
+                  if (!src.match(/^(https?:\/\/|\/)/)) {
+                    const resourcePath = `${props.resourcesPath}/${src}`;
+                    const assetUrl = convertFileSrc(resourcePath);
+                    return `<img ${before}src="${assetUrl}"${after}>`;
+                  }
+                  return match;
+                }
+              );
+            }
+          }
+        });
+        
         const html = await marked(markdown);
         return html;
       } catch (error) {

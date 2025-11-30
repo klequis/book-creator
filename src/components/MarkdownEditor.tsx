@@ -9,6 +9,7 @@ import './MarkdownEditor.css';
 
 interface MarkdownEditorProps {
   filePath: string | null;
+  resourcesPath: string | null;
 }
 
 export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
@@ -141,7 +142,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
 
   createEffect(() => {
     // Update editor font size when zoom changes
-    const currentZoom = zoom();
+    zoom(); // Track zoom dependency
     if (editorView && editorContainer) {
       editorView.destroy();
       initializeEditor(editorContainer);

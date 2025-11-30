@@ -38,6 +38,7 @@ export interface BookPart {
 
 export interface Book {
   rootPath: string;
+  resourcesPath: string | null;
   bookParts: BookPart[];
   chapters: Chapter[];
   sections: Section[];

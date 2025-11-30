@@ -7,6 +7,7 @@ import "./App.css";
 function App() {
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null);
   const [treeZoom, setTreeZoom] = createSignal(180);
+  const [resourcesPath, setResourcesPath] = createSignal<string | null>(null);
 
   // Calculate sidebar width based on zoom (base 300px at 100%)
   const sidebarWidth = () => Math.round((300 * treeZoom()) / 100);
@@ -15,14 +16,14 @@ function App() {
     <div class="app">
       <div class="app-layout">
         <div class="sidebar" style={{ width: `${sidebarWidth()}px` }}>
-          <TreeView onFileSelect={setSelectedFile} onZoomChange={setTreeZoom} />
+          <TreeView onFileSelect={setSelectedFile} onZoomChange={setTreeZoom} onResourcesPathChange={setResourcesPath} />
         </div>
         <div class="main-content">
           <div class="editor-pane">
-            <MarkdownEditor filePath={selectedFile()} />
+            <MarkdownEditor filePath={selectedFile()} resourcesPath={resourcesPath()} />
           </div>
           <div class="preview-pane">
-            <MarkdownPreview filePath={selectedFile()} />
+            <MarkdownPreview filePath={selectedFile()} resourcesPath={resourcesPath()} />
           </div>
         </div>
       </div>
