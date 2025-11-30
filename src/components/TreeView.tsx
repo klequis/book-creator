@@ -13,6 +13,7 @@ interface TreeViewProps {
 export const TreeView: Component<TreeViewProps> = (props) => {
   const [bookPath, setBookPath] = createSignal<string>('');
   const [zoom, setZoom] = createSignal(180);
+  const [refreshTrigger, setRefreshTrigger] = createSignal(0);
   let store: Awaited<ReturnType<typeof load>> | null = null;
 
   const saveZoom = async (newZoom: number) => {
@@ -66,26 +67,29 @@ export const TreeView: Component<TreeViewProps> = (props) => {
     }
   });
   
-  const [structure] = createResource(bookPath, async (path) => {
-    if (!path) return null;
-    console.log('Fetching book structure for:', path);
-    const result = await bookService.getStructure(path);
-    console.log('Book structure loaded:', JSON.stringify(result, null, 2));
-    
-    // Save the path when successfully loaded
-    try {
-      if (!store) {
-        store = await load('settings.json', { autoSave: false });
+  const [structure] = createResource(
+    () => [bookPath(), refreshTrigger()] as const,
+    async ([path]) => {
+      if (!path) return null;
+      console.log('Fetching book structure for:', path);
+      const result = await bookService.getStructure(path);
+      console.log('Book structure loaded:', JSON.stringify(result, null, 2));
+      
+      // Save the path when successfully loaded
+      try {
+        if (!store) {
+          store = await load('settings.json', { autoSave: false });
+        }
+        await store.set('lastBookPath', path);
+        await store.save();
+        console.log('Saved book path to store');
+      } catch (err) {
+        console.error('Failed to save path:', err);
       }
-      await store.set('lastBookPath', path);
-      await store.save();
-      console.log('Saved book path to store');
-    } catch (err) {
-      console.error('Failed to save path:', err);
+      
+      return result;
     }
-    
-    return result;
-  });
+  );
 
   createEffect(() => {
       console.log('structure():', structure());
@@ -159,7 +163,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
 
       <div class="tree-content-wrapper" style={{ "font-size": `${zoom()}%` }}>
         <Show when={structure()}>
-          {(s) => <Book structure={s()} onFileSelect={props.onFileSelect} />}
+          {(s) => <Book structure={s()} onFileSelect={props.onFileSelect} onRefresh={() => setRefreshTrigger(prev => prev + 1)} />}
         </Show>
 
         <Show when={!structure.loading && !structure() && !structure.error}>

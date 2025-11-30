@@ -1,10 +1,12 @@
 import { Component, For, Show, createMemo } from 'solid-js';
 import type { Book as BookStructure } from '../types/book';
 import { PartNode } from './PartNode';
+import { bookService } from '../services/bookService';
 
 interface BookProps {
   structure: BookStructure;
   onFileSelect: (filePath: string | null) => void;
+  onRefresh: () => void;
 }
 
 export const Book: Component<BookProps> = (props) => {
@@ -12,6 +14,11 @@ export const Book: Component<BookProps> = (props) => {
   console.log('[Book] Book Parts:', props.structure.bookParts.length);
   console.log('[Book] Chapters:', props.structure.chapters.length);
   console.log('[Book] Sections:', props.structure.sections.length);
+
+  const handleSectionsReordered = () => {
+    bookService.invalidateCache();
+    props.onRefresh();
+  };
 
   // Group chapters by their relationships
   const introduction = createMemo(() => 
@@ -56,6 +63,7 @@ export const Book: Component<BookProps> = (props) => {
               chapters={[intro()]}
               sections={introSections}
               onFileSelect={props.onFileSelect}
+              onSectionsReordered={handleSectionsReordered}
             />
           );
         }}
@@ -67,7 +75,7 @@ export const Book: Component<BookProps> = (props) => {
           console.log(`[Book] Rendering part ${index()}:`, part);
           const partChapters = getChaptersForPart(part.id);
           const allSections = partChapters.flatMap(ch => getSectionsForChapter(ch.id));
-          return <PartNode part={part} chapters={partChapters} sections={allSections} onFileSelect={props.onFileSelect} />;
+          return <PartNode part={part} chapters={partChapters} sections={allSections} onFileSelect={props.onFileSelect} onSectionsReordered={handleSectionsReordered} />;
         }}
       </For>
 
@@ -89,6 +97,7 @@ export const Book: Component<BookProps> = (props) => {
                 chapters={[chapter]}
                 sections={chapterSections}
                 onFileSelect={props.onFileSelect}
+                onSectionsReordered={handleSectionsReordered}
               />
             );
           }}
@@ -109,6 +118,7 @@ export const Book: Component<BookProps> = (props) => {
           sections={appendices().flatMap(ch => getSectionsForChapter(ch.id))}
           isAppendix={true}
           onFileSelect={props.onFileSelect}
+          onSectionsReordered={handleSectionsReordered}
         />
       </Show>
     </div>
