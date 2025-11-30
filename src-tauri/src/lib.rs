@@ -80,6 +80,14 @@ fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
         .map_err(|e| format!("Failed to rename: {}", e))
 }
 
+// Read binary file and return base64 encoded data
+#[tauri::command]
+fn read_binary_file(path: String) -> Result<String, String> {
+    let bytes = fs::read(&path)
+        .map_err(|e| format!("Failed to read binary file: {}", e))?;
+    Ok(base64::encode(&bytes))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -93,7 +101,8 @@ pub fn run() {
             create_directory,
             delete_file,
             delete_directory,
-            rename_path
+            rename_path,
+            read_binary_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

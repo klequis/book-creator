@@ -2,7 +2,6 @@ import { Component, createResource, Show, createSignal, onMount } from 'solid-js
 import { invoke } from '@tauri-apps/api/core';
 import { marked } from 'marked';
 import { load } from '@tauri-apps/plugin-store';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import './MarkdownPreview.css';
 
 interface MarkdownPreviewProps {
@@ -65,45 +64,73 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
         // Configure marked to use hooks for image processing
         marked.use({
           hooks: {
-            postprocess(html) {
+            async postprocess(html) {
               if (!resourcesPath) return html;
               
-              // Replace relative image paths with converted asset URLs
-              return html.replace(
-                /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/gi,
-                (match, before, src, after) => {
-                  // If src is relative (doesn't start with http:// or https:// or /)
-                  if (!src.match(/^(https?:\/\/|\/)/)) {
-                    let fullPath: string;
-                    
-                    // Check if it's a relative path with ../ or ./
-                    if (src.includes('../') || src.includes('./')) {
-                      // Resolve relative to the markdown file's directory
-                      const fileDir = path.substring(0, path.lastIndexOf('/'));
-                      fullPath = `${fileDir}/${src}`;
-                      // Normalize the path (remove .. and .)
-                      const parts = fullPath.split('/');
-                      const normalized: string[] = [];
-                      for (const part of parts) {
-                        if (part === '..') {
-                          normalized.pop();
-                        } else if (part !== '.' && part !== '') {
-                          normalized.push(part);
-                        }
-                      }
-                      fullPath = normalized.join('/');
-                    } else {
-                      // Assume it's just a filename in the resources folder
-                      fullPath = `${resourcesPath}/${src}`;
+              // Find all image tags
+              const imgRegex = /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/gi;
+              const matches = Array.from(html.matchAll(imgRegex));
+              
+              // Process each image
+              for (const match of matches) {
+                const [fullMatch, before, src, after] = match;
+                
+                // Skip absolute URLs
+                if (src.match(/^(https?:\/\/|\/)/)) continue;
+                
+                let fullPath: string;
+                
+                // Check if it's a relative path with ../ or ./
+                if (src.includes('../') || src.includes('./')) {
+                  // Resolve relative to the markdown file's directory
+                  const fileDir = path.substring(0, path.lastIndexOf('/'));
+                  fullPath = `${fileDir}/${src}`;
+                  // Normalize the path (remove .. and .)
+                  const parts = fullPath.split('/');
+                  const normalized: string[] = [];
+                  for (const part of parts) {
+                    if (part === '..') {
+                      normalized.pop();
+                    } else if (part !== '.' && part !== '') {
+                      normalized.push(part);
                     }
-                    
-                    const assetUrl = convertFileSrc(fullPath);
-                    console.log(`Image src: ${src} -> ${fullPath} -> ${assetUrl}`);
-                    return `<img ${before}src="${assetUrl}"${after}>`;
                   }
-                  return match;
+                  fullPath = normalized.join('/');
+                } else {
+                  // Assume it's just a filename in the resources folder
+                  fullPath = `${resourcesPath}/${src}`;
                 }
-              );
+                
+                console.log(`Image resolution:`);
+                console.log(`  Original src: ${src}`);
+                console.log(`  Full path: ${fullPath}`);
+                
+                try {
+                  // Read the image file as base64
+                  const base64Data: string = await invoke('read_binary_file', { path: fullPath });
+                  
+                  // Determine MIME type from extension
+                  const ext = fullPath.split('.').pop()?.toLowerCase();
+                  const mimeTypes: { [key: string]: string } = {
+                    'png': 'image/png',
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'gif': 'image/gif',
+                    'svg': 'image/svg+xml',
+                    'webp': 'image/webp'
+                  };
+                  const mimeType = mimeTypes[ext || ''] || 'image/png';
+                  
+                  const dataUrl = `data:${mimeType};base64,${base64Data}`;
+                  console.log(`  Data URL created (${base64Data.length} bytes)`);
+                  
+                  html = html.replace(fullMatch, `<img ${before}src="${dataUrl}"${after}>`);
+                } catch (error) {
+                  console.error(`Failed to load image ${fullPath}:`, error);
+                }
+              }
+              
+              return html;
             }
           }
         });

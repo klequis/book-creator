@@ -305,6 +305,7 @@ dependencies = [
 name = "book-creator"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "serde",
  "serde_json",
  "tauri",
