@@ -10,15 +10,19 @@ export class BookService {
   private cache: Book | null = null;
 
   async getStructure(rootPath: string): Promise<Book | null> {
+    console.log('[BookService] getStructure called. Cache exists:', !!this.cache);
     if (this.cache && this.cache.rootPath === rootPath) {
+      console.log('[BookService] Returning cached structure');
       return this.cache;
     }
 
+    console.log('[BookService] Cache miss, scanning workspace');
     this.cache = await this.scanWorkspace(rootPath);
     return this.cache;
   }
 
   invalidateCache() {
+    console.log('[BookService] Cache invalidated');
     this.cache = null;
   }
 

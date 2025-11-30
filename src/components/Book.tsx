@@ -17,7 +17,9 @@ export const Book: Component<BookProps> = (props) => {
   console.log('[Book] Sections:', props.structure.sections.length);
 
   const handleSectionsReordered = () => {
+    console.log('[Book] handleSectionsReordered called');
     bookService.invalidateCache();
+    console.log('[Book] Cache invalidated, calling onRefresh');
     props.onRefresh();
   };
 

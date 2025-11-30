@@ -49,21 +49,21 @@ export const FileNode: Component<FileNodeProps> = (props) => {
           y={menuPosition().y}
           onClose={() => setShowContextMenu(false)}
           items={[
-            {
+            props.onAddSectionAbove && {
               label: 'Add Section Above',
               onClick: () => {
                 props.onAddSectionAbove?.();
                 setShowContextMenu(false);
               }
             },
-            {
+            props.onAddSectionBelow && {
               label: 'Add Section Below',
               onClick: () => {
                 props.onAddSectionBelow?.();
                 setShowContextMenu(false);
               }
             },
-            {
+            props.onMoveUp && {
               label: 'Move Up',
               onClick: () => {
                 props.onMoveUp?.();
@@ -71,7 +71,7 @@ export const FileNode: Component<FileNodeProps> = (props) => {
               },
               disabled: !props.canMoveUp
             },
-            {
+            props.onMoveDown && {
               label: 'Move Down',
               onClick: () => {
                 props.onMoveDown?.();
@@ -79,7 +79,7 @@ export const FileNode: Component<FileNodeProps> = (props) => {
               },
               disabled: !props.canMoveDown
             }
-          ]}
+          ].filter(Boolean) as Array<{label: string; onClick: () => void; disabled?: boolean}>}
         />
       </Show>
     </>

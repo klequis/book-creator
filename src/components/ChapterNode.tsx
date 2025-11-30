@@ -2,6 +2,7 @@ import { Component, createSignal, For, Show } from 'solid-js';
 import type { Chapter, Section } from '../types/book';
 import { FileNode } from './FileNode';
 import { ContextMenu } from './ContextMenu';
+import { InlineInput } from './InlineInput';
 import { invoke } from '@tauri-apps/api/core';
 import './TreeView.css';
 
@@ -15,6 +16,7 @@ interface ChapterNodeProps {
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
   const [expanded, setExpanded] = createSignal(true);
   const [contextMenu, setContextMenu] = createSignal<{ x: number; y: number } | null>(null);
+  const [addingSection, setAddingSection] = createSignal<{ index: number; position: 'above' | 'below' } | null>(null);
 
   const toggleExpand = () => {
     setExpanded(!expanded());
@@ -26,53 +28,54 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
-  const handleAddSection = async () => {
+  const handleAddSection = () => {
     setContextMenu(null);
-    await addSection();
-  };
-
-  const addSection = async () => {
-    try {
-      // Find the next available section number
-      const existingSections = props.sections.filter(s => s.level === 1); // H2 sections
-      let nextNum = 1;
-      if (existingSections.length > 0) {
-        const nums = existingSections.map(s => parseInt(s.section2Num));
-        nextNum = Math.max(...nums) + 1;
-      }
-
-      const section2Num = nextNum.toString().padStart(2, '0');
-      const fileName = `${props.chapter.chapterNum}-${section2Num}-00-00 New Section.md`;
-      const filePath = `${props.chapter.folderPath}/${fileName}`;
-
-      // Create the file with default content
-      const content = `## ${props.chapter.chapterNum}.${nextNum} New Section\n\nSection content goes here.\n`;
-      
-      await invoke('write_file', {
-        path: filePath,
-        contents: content
-      });
-
-      console.log('Created new section:', filePath);
-
-      // Trigger refresh
-      props.onSectionsReordered?.();
-    } catch (error) {
-      console.error('Failed to add section:', error);
-      alert(`Failed to add section: ${error}`);
+    // Add at the end - use the last section's index with 'below' position
+    const lastIndex = props.sections.length - 1;
+    if (lastIndex >= 0) {
+      startAddingSection(lastIndex, 'below');
+    } else {
+      // No sections yet, create the first one
+      startAddingSection(0, 'below');
     }
   };
 
-  const addSectionRelativeTo = async (index: number, position: 'above' | 'below') => {
+  const startAddingSection = (index: number, position: 'above' | 'below') => {
+    setAddingSection({ index, position });
+  };
+
+  const createSectionWithName = async (sectionName: string) => {
     try {
+      const addInfo = addingSection();
+      if (!addInfo) return;
+
+      const { index, position } = addInfo;
       const targetSection = props.sections[index];
-      const targetNum = parseInt(targetSection.section2Num);
-      const insertNum = position === 'above' ? targetNum : targetNum + 1;
+      console.log('createSectionWithName:', { sectionName, targetSection, position, index });
+
+      // Get all level-1 sections (H2 sections, not the chapter title)
+      const level1Sections = props.sections.filter(s => s.level === 1);
+      console.log('level1Sections:', level1Sections);
+      
+      let insertNum: number;
+      
+      if (targetSection.level === 0) {
+        // Chapter title - insert as first H2 section
+        insertNum = 1;
+      } else {
+        // For H2 sections
+        const targetNum = parseInt(targetSection.section2Num);
+        insertNum = position === 'above' ? targetNum : targetNum + 1;
+      }
+
+      console.log('insertNum:', insertNum);
 
       // Renumber all sections at or after the insert position
-      const sectionsToRenumber = props.sections
-        .filter(s => s.level === 1 && parseInt(s.section2Num) >= insertNum)
+      const sectionsToRenumber = level1Sections
+        .filter(s => parseInt(s.section2Num) >= insertNum)
         .sort((a, b) => parseInt(b.section2Num) - parseInt(a.section2Num)); // Descending order
+
+      console.log('sectionsToRenumber:', sectionsToRenumber);
 
       for (const section of sectionsToRenumber) {
         const oldNum = parseInt(section.section2Num);
@@ -85,6 +88,7 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
         );
         const newPath = `${props.chapter.folderPath}/${newFileName}`;
 
+        console.log('Renaming:', { oldPath: section.filePath, newPath });
         await invoke('rename_path', {
           oldPath: section.filePath,
           newPath
@@ -93,11 +97,12 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
 
       // Create the new section
       const section2Num = insertNum.toString().padStart(2, '0');
-      const fileName = `${props.chapter.chapterNum}-${section2Num}-00-00 New Section.md`;
+      const fileName = `${props.chapter.chapterNum}-${section2Num}-00-00 ${sectionName}.md`;
       const filePath = `${props.chapter.folderPath}/${fileName}`;
 
-      const content = `## ${props.chapter.chapterNum}.${insertNum} New Section\n\nSection content goes here.\n`;
+      const content = `## ${props.chapter.chapterNum}.${insertNum} ${sectionName}\n\nSection content goes here.\n`;
       
+      console.log('Creating new section:', filePath);
       await invoke('write_file', {
         path: filePath,
         contents: content
@@ -105,11 +110,14 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
 
       console.log('Created new section:', filePath);
 
+      setAddingSection(null);
+
       // Trigger refresh
       props.onSectionsReordered?.();
     } catch (error) {
       console.error('Failed to add section:', error);
       alert(`Failed to add section: ${error}`);
+      setAddingSection(null);
     }
   };
 
@@ -204,18 +212,46 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
       <Show when={expanded()}>
         <div class="files-container">
           <For each={props.sections}>
-            {(file, index) => (
-              <FileNode 
-                file={file} 
-                onFileSelect={props.onFileSelect}
-                onMoveUp={() => moveSection(index(), 'up')}
-                onMoveDown={() => moveSection(index(), 'down')}
-                canMoveUp={index() > 0}
-                canMoveDown={index() < props.sections.length - 1}
-                onAddSectionAbove={() => addSectionRelativeTo(index(), 'above')}
-                onAddSectionBelow={() => addSectionRelativeTo(index(), 'below')}
-              />
-            )}
+            {(file, index) => {
+              const isChapterTitle = file.level === 0;
+              const showInputAbove = () => {
+                const adding = addingSection();
+                return adding && adding.index === index() && adding.position === 'above';
+              };
+              const showInputBelow = () => {
+                const adding = addingSection();
+                return adding && adding.index === index() && adding.position === 'below';
+              };
+              
+              return (
+                <>
+                  <Show when={showInputAbove()}>
+                    <InlineInput
+                      placeholder="Section name..."
+                      onSave={createSectionWithName}
+                      onCancel={() => setAddingSection(null)}
+                    />
+                  </Show>
+                  <FileNode 
+                    file={file} 
+                    onFileSelect={props.onFileSelect}
+                    onMoveUp={!isChapterTitle ? () => moveSection(index(), 'up') : undefined}
+                    onMoveDown={!isChapterTitle ? () => moveSection(index(), 'down') : undefined}
+                    canMoveUp={!isChapterTitle && index() > 0}
+                    canMoveDown={!isChapterTitle && index() < props.sections.length - 1}
+                    onAddSectionAbove={!isChapterTitle ? () => startAddingSection(index(), 'above') : undefined}
+                    onAddSectionBelow={() => startAddingSection(index(), 'below')}
+                  />
+                  <Show when={showInputBelow()}>
+                    <InlineInput
+                      placeholder="Section name..."
+                      onSave={createSectionWithName}
+                      onCancel={() => setAddingSection(null)}
+                    />
+                  </Show>
+                </>
+              );
+            }}
           </For>
         </div>
       </Show>

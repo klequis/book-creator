@@ -69,12 +69,17 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   });
   
   const [structure] = createResource(
-    () => [bookPath(), refreshTrigger()] as const,
+    () => {
+      const trigger = refreshTrigger();
+      const path = bookPath();
+      console.log('[TreeView] Resource source updated:', { path, trigger });
+      return [path, trigger] as const;
+    },
     async ([path]) => {
       if (!path) return null;
-      console.log('Fetching book structure for:', path);
+      console.log('[TreeView] Fetching book structure for:', path);
       const result = await bookService.getStructure(path);
-      console.log('Book structure loaded:', JSON.stringify(result, null, 2));
+      console.log('[TreeView] Book structure loaded. Sections:', result?.sections.length);
       
       // Notify parent of resources path
       props.onResourcesPathChange(result?.resourcesPath || null);
