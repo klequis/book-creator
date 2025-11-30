@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
+use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct DirectoryEntry {
@@ -85,7 +86,7 @@ fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
 fn read_binary_file(path: String) -> Result<String, String> {
     let bytes = fs::read(&path)
         .map_err(|e| format!("Failed to read binary file: {}", e))?;
-    Ok(base64::encode(&bytes))
+    Ok(general_purpose::STANDARD.encode(&bytes))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
