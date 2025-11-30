@@ -1,9 +1,11 @@
 /**
  * Type definitions for book structure
- * Based on VS Code extension types
+ * Flat/normalized structure with ID-based relationships
  */
 
-export interface SectionMetadata {
+export interface Section {
+  id: string;
+  chapterId: string;
   filePath: string;
   fileName: string;
   title: string;
@@ -15,25 +17,28 @@ export interface SectionMetadata {
   level: number; // 0=chapter, 1=section2, 2=section3, 3=section4
 }
 
-export interface ChapterMetadata {
+export interface Chapter {
+  id: string;
+  bookPartId: string | null; // null = standalone chapter
   folderPath: string;
   folderName: string;
   chapterNum: string;
   title: string;
-  sections: SectionMetadata[];
+  isIntroduction: boolean;
+  isAppendix: boolean;
 }
 
-export interface PartMetadata {
+export interface BookPart {
+  id: string;
   folderPath: string;
   folderName: string;
   partNum: string;
   title: string;
-  chapters: ChapterMetadata[];
 }
 
-export interface BookStructure {
-  introduction?: ChapterMetadata;
-  parts: PartMetadata[];
-  appendices: ChapterMetadata[];
+export interface Book {
   rootPath: string;
+  bookParts: BookPart[];
+  chapters: Chapter[];
+  sections: Section[];
 }

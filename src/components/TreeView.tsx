@@ -1,51 +1,23 @@
-import { Component, createSignal, Show } from 'solid-js';
+import { Component, createSignal, createResource, Show, createEffect } from 'solid-js';
 import { open } from '@tauri-apps/plugin-dialog';
-import type { BookStructure } from '../types/book';
 import { bookService } from '../services/bookService';
 import { Book } from './Book';
 import './TreeView.css';
 
 export const TreeView: Component = () => {
   const [bookPath, setBookPath] = createSignal<string>('');
-  const [structure, setStructure] = createSignal<BookStructure | null>(null);
-  const [loading, setLoading] = createSignal(false);
-  const [error, setError] = createSignal<string | null>(null);
+  
+  const [structure] = createResource(bookPath, async (path) => {
+    if (!path) return null;
+    console.log('Fetching book structure for:', path);
+    const result = await bookService.getStructure(path);
+    console.log('Book structure loaded:', JSON.stringify(result, null, 2));
+    return result;
+  });
 
-  const loadBook = async (path?: string) => {
-    const folderPath = path || bookPath();
-    if (!folderPath) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await bookService.getStructure(folderPath);
-      console.log('Book structure loaded:', JSON.stringify(result, null, 2));
-      
-      if (!result) {
-        setError('Failed to load book structure');
-        setStructure(null);
-        return;
-      }
-      
-      // Temporarily disabled content check to debug
-      // const hasContent = result.parts.length > 0 || result.introduction || result.appendices.length > 0;
-      // if (!hasContent) {
-      //   setError('Book loaded but no content found. Check the book structure.');
-      //   setStructure(null);
-      //   return;
-      // }
-      
-      setStructure(result);
-      setBookPath(folderPath);
-    } catch (err) {
-      console.error('Load book error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load book');
-      setStructure(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  createEffect(() => {
+      console.log('structure():', structure());
+  });
 
   const selectFolder = async () => {
     try {
@@ -59,11 +31,10 @@ export const TreeView: Component = () => {
       console.log('Selected:', selected);
       
       if (selected && typeof selected === 'string') {
-        await loadBook(selected);
+        setBookPath(selected);
       }
     } catch (err) {
       console.error('Folder picker error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to open folder picker');
     }
   };
 
@@ -73,30 +44,38 @@ export const TreeView: Component = () => {
         <button 
           class="browse-button" 
           onClick={selectFolder}
-          disabled={loading()}
+          disabled={structure.loading}
         >
-          {loading() ? '⏳ Loading...' : '📁 Select Book Folder...'}
+          {structure.loading ? '⏳ Loading...' : '📁 Select Book Folder...'}
         </button>
         <Show when={bookPath()}>
           <span class="current-path">{bookPath()}</span>
         </Show>
       </div>
 
-      <Show when={error()}>
-        <div class="error-message">{error()}</div>
-        <pre style="color: #ccc; font-size: 11px; padding: 12px; overflow: auto; max-height: 400px;">
-          Debug info will appear here after selecting a folder
-        </pre>
+      <Show when={structure.error}>
+        <div class="error-message">
+          {structure.error instanceof Error ? structure.error.message : 'Failed to load book'}
+        </div>
       </Show>
 
       {/* Debug display */}
       <div style="padding: 12px; color: #858585; font-size: 11px;">
-        Structure loaded: {structure() ? 'YES' : 'NO'}
+        {(() => {
+          const hasContent = structure() && (
+            structure()!.chapters.length > 0 ||
+            structure()!.sections.length > 0
+          );
+          return `Structure loaded: ${hasContent ? 'YES' : 'NO'}`;
+        })()}
         {structure() && (
           <div>
-            Parts: {structure()!.parts.length} | 
-            Introduction: {structure()!.introduction ? 'YES' : 'NO'} | 
-            Appendices: {structure()!.appendices.length}
+            Book Parts: {structure()!.bookParts.length} | 
+            Chapters: {structure()!.chapters.length} | 
+            Sections: {structure()!.sections.length}
+            <br />
+            Introduction: {structure()!.chapters.filter(ch => ch.isIntroduction).length > 0 ? 'YES' : 'NO'} | 
+            Appendices: {structure()!.chapters.filter(ch => ch.isAppendix).length}
           </div>
         )}
       </div>
@@ -105,7 +84,7 @@ export const TreeView: Component = () => {
         {(s) => <Book structure={s()} />}
       </Show>
 
-      <Show when={!loading() && !structure() && !error()}>
+      <Show when={!structure.loading && !structure() && !structure.error}>
         <div class="empty-state">
           <p>Click "Select Book Folder" to get started</p>
         </div>

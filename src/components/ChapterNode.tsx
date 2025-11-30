@@ -1,10 +1,11 @@
 import { Component, createSignal, For, Show } from 'solid-js';
-import type { ChapterMetadata } from '../types/book';
+import type { Chapter, Section } from '../types/book';
 import { FileNode } from './FileNode';
 import './TreeView.css';
 
 interface ChapterNodeProps {
-  chapter: ChapterMetadata;
+  chapter: Chapter;
+  sections: Section[];
 }
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
@@ -29,12 +30,12 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
       <div class="chapter-header" onClick={toggleExpand}>
         <span class="expand-icon">{expanded() ? '▼' : '▶'}</span>
         <span class="chapter-title">{getDisplayTitle()}</span>
-        <span class="file-count">({props.chapter.sections.length})</span>
+        <span class="file-count">({props.sections.length})</span>
       </div>
 
       <Show when={expanded()}>
         <div class="files-container">
-          <For each={props.chapter.sections}>
+          <For each={props.sections}>
             {(file) => <FileNode file={file} />}
           </For>
         </div>

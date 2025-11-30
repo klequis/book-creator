@@ -1,10 +1,12 @@
 import { Component, createSignal, For, Show } from 'solid-js';
-import type { PartMetadata } from '../types/book';
+import type { BookPart, Chapter, Section } from '../types/book';
 import { ChapterNode } from './ChapterNode';
 import './TreeView.css';
 
 interface PartNodeProps {
-  part: PartMetadata;
+  part: BookPart;
+  chapters: Chapter[];
+  sections: Section[];
   isIntroduction?: boolean;
   isAppendix?: boolean;
 }
@@ -29,6 +31,11 @@ export const PartNode: Component<PartNodeProps> = (props) => {
     return props.isIntroduction || props.isAppendix || props.part.partNum;
   };
 
+  // Helper to get sections for a specific chapter
+  const getSectionsForChapter = (chapterId: string) => {
+    return props.sections.filter(sec => sec.chapterId === chapterId);
+  };
+
   return (
     <div class="part-node">
       <Show when={shouldShowPartHeader()}>
@@ -40,8 +47,11 @@ export const PartNode: Component<PartNodeProps> = (props) => {
 
       <Show when={expanded()}>
         <div class="chapters-container">
-          <For each={props.part.chapters}>
-            {(chapter) => <ChapterNode chapter={chapter} />}
+          <For each={props.chapters}>
+            {(chapter) => {
+              const chapterSections = getSectionsForChapter(chapter.id);
+              return <ChapterNode chapter={chapter} sections={chapterSections} />;
+            }}
           </For>
         </div>
       </Show>
