@@ -56,8 +56,8 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
     saveZoom(180);
   };
   const [content] = createResource(
-    () => props.filePath,
-    async (path) => {
+    () => [props.filePath, props.resourcesPath] as const,
+    async ([path, resourcesPath]) => {
       if (!path) return null;
       try {
         const markdown: string = await invoke('read_file', { path });
@@ -66,7 +66,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
         marked.use({
           hooks: {
             postprocess(html) {
-              if (!props.resourcesPath) return html;
+              if (!resourcesPath) return html;
               
               // Replace relative image paths with converted asset URLs
               return html.replace(
@@ -74,8 +74,31 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
                 (match, before, src, after) => {
                   // If src is relative (doesn't start with http:// or https:// or /)
                   if (!src.match(/^(https?:\/\/|\/)/)) {
-                    const resourcePath = `${props.resourcesPath}/${src}`;
-                    const assetUrl = convertFileSrc(resourcePath);
+                    let fullPath: string;
+                    
+                    // Check if it's a relative path with ../ or ./
+                    if (src.includes('../') || src.includes('./')) {
+                      // Resolve relative to the markdown file's directory
+                      const fileDir = path.substring(0, path.lastIndexOf('/'));
+                      fullPath = `${fileDir}/${src}`;
+                      // Normalize the path (remove .. and .)
+                      const parts = fullPath.split('/');
+                      const normalized: string[] = [];
+                      for (const part of parts) {
+                        if (part === '..') {
+                          normalized.pop();
+                        } else if (part !== '.' && part !== '') {
+                          normalized.push(part);
+                        }
+                      }
+                      fullPath = normalized.join('/');
+                    } else {
+                      // Assume it's just a filename in the resources folder
+                      fullPath = `${resourcesPath}/${src}`;
+                    }
+                    
+                    const assetUrl = convertFileSrc(fullPath);
+                    console.log(`Image src: ${src} -> ${fullPath} -> ${assetUrl}`);
                     return `<img ${before}src="${assetUrl}"${after}>`;
                   }
                   return match;
