@@ -1,5 +1,6 @@
-import { Component, createSignal, createResource, Show, createEffect } from 'solid-js';
+import { Component, createSignal, createResource, Show, createEffect, onMount } from 'solid-js';
 import { open } from '@tauri-apps/plugin-dialog';
+import { load } from '@tauri-apps/plugin-store';
 import { bookService } from '../services/bookService';
 import { Book } from './Book';
 import './TreeView.css';
@@ -10,12 +11,40 @@ interface TreeViewProps {
 
 export const TreeView: Component<TreeViewProps> = (props) => {
   const [bookPath, setBookPath] = createSignal<string>('');
+  let store: Awaited<ReturnType<typeof load>> | null = null;
+  
+  // Load saved book path on mount
+  onMount(async () => {
+    try {
+      store = await load('settings.json', { autoSave: false });
+      const savedPath = await store.get<string>('lastBookPath');
+      if (savedPath) {
+        console.log('Restored book path:', savedPath);
+        setBookPath(savedPath);
+      }
+    } catch (err) {
+      console.error('Failed to load saved path:', err);
+    }
+  });
   
   const [structure] = createResource(bookPath, async (path) => {
     if (!path) return null;
     console.log('Fetching book structure for:', path);
     const result = await bookService.getStructure(path);
     console.log('Book structure loaded:', JSON.stringify(result, null, 2));
+    
+    // Save the path when successfully loaded
+    try {
+      if (!store) {
+        store = await load('settings.json', { autoSave: false });
+      }
+      await store.set('lastBookPath', path);
+      await store.save();
+      console.log('Saved book path to store');
+    } catch (err) {
+      console.error('Failed to save path:', err);
+    }
+    
     return result;
   });
 
