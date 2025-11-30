@@ -1,4 +1,4 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow, LogicalPosition, LogicalSize } from '@tauri-apps/api/window';
 import { load } from '@tauri-apps/plugin-store';
 
 interface WindowState {
@@ -38,8 +38,8 @@ export async function restoreWindowState() {
     
     if (state) {
       const window = getCurrentWindow();
-      await window.setPosition({ x: state.x, y: state.y });
-      await window.setSize({ width: state.width, height: state.height });
+      await window.setPosition(new LogicalPosition(state.x, state.y));
+      await window.setSize(new LogicalSize(state.width, state.height));
       console.log('Window state restored:', state);
     }
   } catch (error) {
@@ -48,7 +48,7 @@ export async function restoreWindowState() {
 }
 
 export function setupWindowStateListeners() {
-  let saveTimeout: NodeJS.Timeout;
+  let saveTimeout: number;
   
   const window = getCurrentWindow();
   

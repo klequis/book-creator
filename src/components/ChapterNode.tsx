@@ -1,6 +1,7 @@
 import { Component, createSignal, For, Show } from 'solid-js';
 import type { Chapter, Section } from '../types/book';
 import { FileNode } from './FileNode';
+import { ContextMenu } from './ContextMenu';
 import { invoke } from '@tauri-apps/api/core';
 import './TreeView.css';
 
@@ -13,9 +14,103 @@ interface ChapterNodeProps {
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
   const [expanded, setExpanded] = createSignal(true);
+  const [contextMenu, setContextMenu] = createSignal<{ x: number; y: number } | null>(null);
 
   const toggleExpand = () => {
     setExpanded(!expanded());
+  };
+
+  const handleContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleAddSection = async () => {
+    setContextMenu(null);
+    await addSection();
+  };
+
+  const addSection = async () => {
+    try {
+      // Find the next available section number
+      const existingSections = props.sections.filter(s => s.level === 1); // H2 sections
+      let nextNum = 1;
+      if (existingSections.length > 0) {
+        const nums = existingSections.map(s => parseInt(s.section2Num));
+        nextNum = Math.max(...nums) + 1;
+      }
+
+      const section2Num = nextNum.toString().padStart(2, '0');
+      const fileName = `${props.chapter.chapterNum}-${section2Num}-00-00 New Section.md`;
+      const filePath = `${props.chapter.folderPath}/${fileName}`;
+
+      // Create the file with default content
+      const content = `## ${props.chapter.chapterNum}.${nextNum} New Section\n\nSection content goes here.\n`;
+      
+      await invoke('write_file', {
+        path: filePath,
+        contents: content
+      });
+
+      console.log('Created new section:', filePath);
+
+      // Trigger refresh
+      props.onSectionsReordered?.();
+    } catch (error) {
+      console.error('Failed to add section:', error);
+      alert(`Failed to add section: ${error}`);
+    }
+  };
+
+  const addSectionRelativeTo = async (index: number, position: 'above' | 'below') => {
+    try {
+      const targetSection = props.sections[index];
+      const targetNum = parseInt(targetSection.section2Num);
+      const insertNum = position === 'above' ? targetNum : targetNum + 1;
+
+      // Renumber all sections at or after the insert position
+      const sectionsToRenumber = props.sections
+        .filter(s => s.level === 1 && parseInt(s.section2Num) >= insertNum)
+        .sort((a, b) => parseInt(b.section2Num) - parseInt(a.section2Num)); // Descending order
+
+      for (const section of sectionsToRenumber) {
+        const oldNum = parseInt(section.section2Num);
+        const newNum = oldNum + 1;
+        const newSection2Num = newNum.toString().padStart(2, '0');
+        
+        const newFileName = section.fileName.replace(
+          /^(\d+|[A-Z])-(\d+)-/,
+          `$1-${newSection2Num}-`
+        );
+        const newPath = `${props.chapter.folderPath}/${newFileName}`;
+
+        await invoke('rename_path', {
+          oldPath: section.filePath,
+          newPath
+        });
+      }
+
+      // Create the new section
+      const section2Num = insertNum.toString().padStart(2, '0');
+      const fileName = `${props.chapter.chapterNum}-${section2Num}-00-00 New Section.md`;
+      const filePath = `${props.chapter.folderPath}/${fileName}`;
+
+      const content = `## ${props.chapter.chapterNum}.${insertNum} New Section\n\nSection content goes here.\n`;
+      
+      await invoke('write_file', {
+        path: filePath,
+        contents: content
+      });
+
+      console.log('Created new section:', filePath);
+
+      // Trigger refresh
+      props.onSectionsReordered?.();
+    } catch (error) {
+      console.error('Failed to add section:', error);
+      alert(`Failed to add section: ${error}`);
+    }
   };
 
   const getDisplayTitle = () => {
@@ -89,11 +184,22 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
 
   return (
     <div class="chapter-node">
-      <div class="chapter-header" onClick={toggleExpand}>
+      <div class="chapter-header" onClick={toggleExpand} onContextMenu={handleContextMenu}>
         <span class="expand-icon">{expanded() ? '▼' : '▶'}</span>
         <span class="chapter-title">{getDisplayTitle()}</span>
         <span class="file-count">({props.sections.length})</span>
       </div>
+
+      <Show when={contextMenu()}>
+        <ContextMenu
+          x={contextMenu()!.x}
+          y={contextMenu()!.y}
+          onClose={() => setContextMenu(null)}
+          items={[
+            { label: 'Add Section', onClick: handleAddSection }
+          ]}
+        />
+      </Show>
 
       <Show when={expanded()}>
         <div class="files-container">
@@ -106,6 +212,8 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
                 onMoveDown={() => moveSection(index(), 'down')}
                 canMoveUp={index() > 0}
                 canMoveDown={index() < props.sections.length - 1}
+                onAddSectionAbove={() => addSectionRelativeTo(index(), 'above')}
+                onAddSectionBelow={() => addSectionRelativeTo(index(), 'below')}
               />
             )}
           </For>

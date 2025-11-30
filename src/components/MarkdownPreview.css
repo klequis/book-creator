@@ -58,8 +58,8 @@
 }
 
 .preview-file-path {
-  font-size: 0.95rem;
-  color: #b0b0b0;
+  font-size: 1.1rem;
+  color: #e1e1e1;
   font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -79,7 +79,7 @@
   border: 1px solid #555;
   padding: 0.25rem 0.5rem;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 1.2rem;
   border-radius: 3px;
   min-width: 32px;
 }

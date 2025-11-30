@@ -1,14 +1,22 @@
-import { Component, onMount, onCleanup } from 'solid-js';
+import { Component, onMount, onCleanup, For } from 'solid-js';
 import './ContextMenu.css';
+
+interface MenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
 
 interface ContextMenuProps {
   x: number;
   y: number;
   onClose: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
+  items?: MenuItem[];
+  // Legacy props for backwards compatibility
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export const ContextMenu: Component<ContextMenuProps> = (props) => {
@@ -28,34 +36,50 @@ export const ContextMenu: Component<ContextMenuProps> = (props) => {
     document.removeEventListener('click', handleClickOutside);
   });
 
+  // Use items if provided, otherwise fall back to legacy move up/down
+  const menuItems = props.items || [
+    {
+      label: 'Move Up',
+      onClick: () => {
+        if (props.onMoveUp) props.onMoveUp();
+        props.onClose();
+      },
+      disabled: !props.canMoveUp
+    },
+    {
+      label: 'Move Down',
+      onClick: () => {
+        if (props.onMoveDown) props.onMoveDown();
+        props.onClose();
+      },
+      disabled: !props.canMoveDown
+    }
+  ];
+
   return (
     <div
       ref={menuRef}
       class="context-menu"
       style={{ top: `${props.y}px`, left: `${props.x}px` }}
     >
-      <div
-        class={`context-menu-item ${!props.canMoveUp ? 'disabled' : ''}`}
-        onClick={() => {
-          if (props.canMoveUp) {
-            props.onMoveUp();
-            props.onClose();
-          }
-        }}
-      >
-        Move Up
-      </div>
-      <div
-        class={`context-menu-item ${!props.canMoveDown ? 'disabled' : ''}`}
-        onClick={() => {
-          if (props.canMoveDown) {
-            props.onMoveDown();
-            props.onClose();
-          }
-        }}
-      >
-        Move Down
-      </div>
+      <For each={menuItems}>
+        {(item) => (
+          <div
+            class={`context-menu-item ${item.disabled ? 'disabled' : ''}`}
+            onClick={() => {
+              if (!item.disabled) {
+                item.onClick();
+                if (!props.items) {
+                  // Only auto-close for legacy mode
+                  props.onClose();
+                }
+              }
+            }}
+          >
+            {item.label}
+          </div>
+        )}
+      </For>
     </div>
   );
 };

@@ -10,6 +10,8 @@ interface FileNodeProps {
   onMoveDown?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  onAddSectionAbove?: () => void;
+  onAddSectionBelow?: () => void;
 }
 
 export const FileNode: Component<FileNodeProps> = (props) => {
@@ -46,10 +48,38 @@ export const FileNode: Component<FileNodeProps> = (props) => {
           x={menuPosition().x}
           y={menuPosition().y}
           onClose={() => setShowContextMenu(false)}
-          onMoveUp={() => props.onMoveUp?.()}
-          onMoveDown={() => props.onMoveDown?.()}
-          canMoveUp={props.canMoveUp ?? false}
-          canMoveDown={props.canMoveDown ?? false}
+          items={[
+            {
+              label: 'Add Section Above',
+              onClick: () => {
+                props.onAddSectionAbove?.();
+                setShowContextMenu(false);
+              }
+            },
+            {
+              label: 'Add Section Below',
+              onClick: () => {
+                props.onAddSectionBelow?.();
+                setShowContextMenu(false);
+              }
+            },
+            {
+              label: 'Move Up',
+              onClick: () => {
+                props.onMoveUp?.();
+                setShowContextMenu(false);
+              },
+              disabled: !props.canMoveUp
+            },
+            {
+              label: 'Move Down',
+              onClick: () => {
+                props.onMoveDown?.();
+                setShowContextMenu(false);
+              },
+              disabled: !props.canMoveDown
+            }
+          ]}
         />
       </Show>
     </>

@@ -135,7 +135,6 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
 
   createEffect(() => {
     // Initialize editor when file loads
-    const path = props.filePath;
     const initialContent = fileContent();
     
     if (editorContainer && initialContent && !fileContent.loading) {
@@ -147,7 +146,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
 
   createEffect(() => {
     // Update editor font size when zoom changes
-    const currentZoom = zoom();
+    zoom(); // Track dependency
     // Use untrack to get content without creating dependency
     const currentContent = untrack(() => content());
     if (editorView && editorContainer && currentContent) {
