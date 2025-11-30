@@ -1,4 +1,4 @@
-import { Component, createSignal, createResource, Show, onMount, onCleanup, createEffect } from 'solid-js';
+import { Component, createSignal, createResource, Show, onMount, onCleanup, createEffect, untrack } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { load } from '@tauri-apps/plugin-store';
 import { EditorView, basicSetup } from 'codemirror';
@@ -70,7 +70,6 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       if (!path) return null;
       try {
         const markdown: string = await invoke('read_file', { path });
-        setContent(markdown);
         return markdown;
       } catch (error) {
         console.error('Failed to load file:', error);
@@ -79,14 +78,14 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
     }
   );
 
-  const initializeEditor = (container: HTMLDivElement) => {
-    console.log('Initializing editor, content:', content());
+  const initializeEditor = (container: HTMLDivElement, initialContent: string) => {
+    console.log('Initializing editor, content length:', initialContent.length);
     if (editorView) {
       editorView.destroy();
     }
 
     const startState = EditorState.create({
-      doc: content(),
+      doc: initialContent,
       extensions: [
         basicSetup,
         markdown(),
@@ -129,23 +128,27 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       state: startState,
       parent: container
     });
-    console.log('Editor initialized, view:', editorView);
+    console.log('Editor initialized');
   };
 
   createEffect(() => {
-    // Initialize editor when content is loaded
-    console.log('Effect 1 - editorContainer:', !!editorContainer, 'content:', content(), 'loading:', fileContent.loading);
-    if (editorContainer && content() !== undefined && !fileContent.loading) {
-      initializeEditor(editorContainer);
+    // Initialize editor when file loads
+    const path = props.filePath;
+    const initialContent = fileContent();
+    
+    if (editorContainer && initialContent && !fileContent.loading) {
+      setContent(initialContent);
+      initializeEditor(editorContainer, initialContent);
     }
   });
 
   createEffect(() => {
     // Update editor font size when zoom changes
-    zoom(); // Track zoom dependency
-    if (editorView && editorContainer) {
-      editorView.destroy();
-      initializeEditor(editorContainer);
+    const currentZoom = zoom();
+    // Use untrack to get content without creating dependency
+    const currentContent = untrack(() => content());
+    if (editorView && editorContainer && currentContent) {
+      initializeEditor(editorContainer, currentContent);
     }
   });
 
