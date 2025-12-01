@@ -2,6 +2,7 @@ use std::fs;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use base64::{Engine as _, engine::general_purpose};
+use tauri::Manager;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct DirectoryEntry {
@@ -105,6 +106,11 @@ pub fn run() {
             rename_path,
             read_binary_file
         ])
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                window.app_handle().exit(0);
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

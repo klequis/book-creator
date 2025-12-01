@@ -79,7 +79,9 @@ export const bookStoreActions = {
       });
     }
   },
-
+  /**
+   * Refresh the book structure by reloading from the current root path
+   */
   async refreshBook() {
     if (bookStore.rootPath) {
       await this.loadBook(bookStore.rootPath);
