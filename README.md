@@ -119,4 +119,4 @@ MIT
 
 ## Author
 
-Carl Quesnel
+Carl Becker
