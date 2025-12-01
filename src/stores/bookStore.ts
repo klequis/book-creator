@@ -4,14 +4,20 @@
 
 import { createStore } from 'solid-js/store';
 import { invoke } from '@tauri-apps/api/core';
+import { load } from '@tauri-apps/plugin-store';
 import type { Book, Section } from '../types/book';
 import { bookService } from '../services/bookService';
 import { showError, showSuccess } from '../utils/notifications';
-import { addRecentBook } from '../utils/recentBooks';
+
+export interface RecentBook {
+  path: string;
+  lastOpened: number;
+}
 
 interface BookState extends Book {
   loading: boolean;
   error: string | null;
+  recentBooks: RecentBook[];
 }
 
 const initialState: BookState = {
@@ -21,10 +27,40 @@ const initialState: BookState = {
   chapters: [],
   sections: [],
   loading: false,
-  error: null
+  error: null,
+  recentBooks: []
 };
 
 const [bookStore, setBookStore] = createStore<BookState>(initialState);
+
+const MAX_RECENT_BOOKS = 5;
+const STORE_KEY = 'recentBooks';
+
+let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
+
+async function getStore() {
+  if (!storeInstance) {
+    storeInstance = await load('settings.json');
+  }
+  return storeInstance;
+}
+
+async function loadRecentBooksFromStore(): Promise<RecentBook[]> {
+  const store = await getStore();
+  const books = await store.get<RecentBook[]>(STORE_KEY);
+  return books || [];
+}
+
+async function saveRecentBooksToStore(books: RecentBook[]): Promise<void> {
+  const store = await getStore();
+  await store.set(STORE_KEY, books);
+  await store.save();
+}
+
+// Initialize recent books on first import
+loadRecentBooksFromStore().then(books => {
+  setBookStore('recentBooks', books);
+});
 
 // Helper functions for store mutations
 export const bookStoreActions = {
@@ -46,15 +82,42 @@ export const bookStoreActions = {
         error: null
       });
       
-      // Add to recent books
-      await addRecentBook(rootPath);
-      
       console.log('[BookStore] Book loaded. Sections:', structure.sections.length);
+      
+      // Add to recent books
+      await this.addToRecentBooks(rootPath);
     } catch (error) {
       console.error('[BookStore] Error loading book:', error);
       setBookStore('loading', false);
       setBookStore('error', error instanceof Error ? error.message : String(error));
     }
+  },
+
+  async addToRecentBooks(path: string) {
+    const books = bookStore.recentBooks;
+    
+    // Remove existing entry if present
+    const filtered = books.filter(book => book.path !== path);
+    
+    // Add new entry at the front
+    const updated: RecentBook[] = [
+      { path, lastOpened: Date.now() },
+      ...filtered
+    ].slice(0, MAX_RECENT_BOOKS);
+    
+    setBookStore('recentBooks', updated);
+    await saveRecentBooksToStore(updated);
+  },
+
+  async removeFromRecentBooks(path: string) {
+    const filtered = bookStore.recentBooks.filter(book => book.path !== path);
+    setBookStore('recentBooks', filtered);
+    await saveRecentBooksToStore(filtered);
+  },
+
+  async clearRecentBooks() {
+    setBookStore('recentBooks', []);
+    await saveRecentBooksToStore([]);
   },
 
   addSection(section: Section) {

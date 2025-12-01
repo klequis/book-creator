@@ -1,5 +1,5 @@
 import { Component, createSignal, Show, For } from 'solid-js';
-import { getRecentBooksSignal } from '../utils/recentBooks';
+import { bookStore } from '../stores/bookStore';
 import './RecentBooksList.css';
 
 interface RecentBooksListProps {
@@ -8,7 +8,6 @@ interface RecentBooksListProps {
 
 export const RecentBooksList: Component<RecentBooksListProps> = (props) => {
   const [expanded, setExpanded] = createSignal(false);
-  const recentBooks = getRecentBooksSignal();
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -36,16 +35,16 @@ export const RecentBooksList: Component<RecentBooksListProps> = (props) => {
       <div class="recent-books-header" onClick={toggleExpanded}>
         <span class="expand-icon">{expanded() ? '▼' : '▶'}</span>
         <span class="recent-books-title">Recent Books</span>
-        <span class="recent-books-count">({recentBooks().length})</span>
+        <span class="recent-books-count">({bookStore.recentBooks.length})</span>
       </div>
       
       <Show when={expanded()}>
         <div class="recent-books-list">
           <Show 
-            when={recentBooks().length > 0}
+            when={bookStore.recentBooks.length > 0}
             fallback={<div class="recent-books-empty">No recent books</div>}
           >
-            <For each={recentBooks()}>
+            <For each={bookStore.recentBooks}>
               {(book) => (
                 <div 
                   class="recent-book-item"
