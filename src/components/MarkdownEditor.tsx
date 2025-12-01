@@ -5,6 +5,7 @@ import { EditorView, basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { editorState } from '../stores/editorState';
 import './MarkdownEditor.css';
 
 interface MarkdownEditorProps {
@@ -34,6 +35,14 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
     } catch (err) {
       console.error('Failed to load editor zoom:', err);
     }
+    
+    // Register save callback
+    editorState.registerSaveCallback(saveFile);
+  });
+
+  onCleanup(() => {
+    // Unregister save callback
+    editorState.unregisterSaveCallback();
   });
 
   const saveZoom = async (newZoom: number) => {
@@ -96,6 +105,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
             const newContent = update.state.doc.toString();
             setContent(newContent);
             setHasUnsavedChanges(true);
+            editorState.setHasUnsavedChanges(true);
             
             // Auto-save after 1 second of no typing
             if (saveTimeout) {
@@ -140,6 +150,8 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
     if (editorContainer && initialContent && !fileContent.loading) {
       setContent(initialContent);
       setHasUnsavedChanges(false);
+      editorState.setHasUnsavedChanges(false);
+      editorState.setCurrentFilePath(props.filePath);
       initializeEditor(editorContainer, initialContent);
     }
   });
@@ -174,6 +186,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       });
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
+      editorState.setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Failed to save file:', error);
       alert(`Failed to save: ${error}`);

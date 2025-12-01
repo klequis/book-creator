@@ -7,6 +7,7 @@ import { invoke } from '@tauri-apps/api/core';
 import type { Book, Section } from '../types/book';
 import { bookService } from '../services/bookService';
 import { showError, showSuccess } from '../utils/notifications';
+import { addRecentBook } from '../utils/recentBooks';
 
 interface BookState extends Book {
   loading: boolean;
@@ -44,6 +45,9 @@ export const bookStoreActions = {
         loading: false,
         error: null
       });
+      
+      // Add to recent books
+      await addRecentBook(rootPath);
       
       console.log('[BookStore] Book loaded. Sections:', structure.sections.length);
     } catch (error) {
@@ -88,6 +92,14 @@ export const bookStoreActions = {
     if (bookStore.rootPath) {
       await this.loadBook(bookStore.rootPath);
     }
+  },
+
+  /**
+   * Close the current book
+   */
+  closeBook() {
+    console.log('[BookStore] Closing book');
+    setBookStore(initialState);
   },
 
   /**

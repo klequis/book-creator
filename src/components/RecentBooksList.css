@@ -1,0 +1,78 @@
+.recent-books {
+  padding: 8px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.recent-books-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.recent-books-header:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.expand-icon {
+  font-size: 10px;
+  width: 12px;
+  display: inline-block;
+}
+
+.recent-books-title {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+}
+
+.recent-books-count {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.recent-books-list {
+  margin-top: 4px;
+  padding-left: 18px;
+}
+
+.recent-books-empty {
+  padding: 12px 8px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+}
+
+.recent-book-item {
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  transition: background-color 0.15s;
+}
+
+.recent-book-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.recent-book-item:active {
+  background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.recent-book-name {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-book-date {
+  font-size: 11px;
+  opacity: 0.7;
+}

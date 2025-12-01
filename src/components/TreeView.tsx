@@ -2,7 +2,10 @@ import { Component, createSignal, Show, createEffect, onMount } from 'solid-js';
 import { open } from '@tauri-apps/plugin-dialog';
 import { load } from '@tauri-apps/plugin-store';
 import { bookStore, bookStoreActions } from '../stores/bookStore';
+import { editorState } from '../stores/editorState';
 import { Book } from './Book';
+import { RecentBooksList } from './RecentBooksList';
+import { showError, showInfo } from '../utils/notifications';
 import './TreeView.css';
 
 interface TreeViewProps {
@@ -112,6 +115,24 @@ export const TreeView: Component<TreeViewProps> = (props) => {
     }
   };
 
+  const handleSelectRecentBook = async (path: string) => {
+    // Check for unsaved changes
+    if (editorState.getHasUnsavedChanges()) {
+      const fileName = editorState.getCurrentFilePath()?.split('/').pop() || 'current file';
+      showInfo(`Saving ${fileName}...`);
+      
+      const saved = await editorState.saveCurrentFile();
+      if (!saved) {
+        showError('Failed to save current file. Please save manually before switching books.');
+        return;
+      }
+    }
+    
+    // Close current book and open new one
+    bookStoreActions.closeBook();
+    setBookPath(path);
+  };
+
   return (
     <div class="tree-view">
       <div class="tree-header">
@@ -128,6 +149,8 @@ export const TreeView: Component<TreeViewProps> = (props) => {
           <button onClick={zoomIn} title="Zoom in">+</button>
         </div>
       </div>
+
+      <RecentBooksList onSelectBook={handleSelectRecentBook} />
 
       <Show when={bookStore.error}>
         <div class="error-message">
