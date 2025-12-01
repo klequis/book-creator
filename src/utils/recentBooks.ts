@@ -1,7 +1,8 @@
 /**
- * Recent books tracking with persistent storage
+ * Recent books tracking with persistent storage and reactivity
  */
 
+import { createSignal } from 'solid-js';
 import { load } from '@tauri-apps/plugin-store';
 
 export interface RecentBook {
@@ -14,6 +15,9 @@ const STORE_KEY = 'recentBooks';
 
 let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
 
+// Reactive signal for recent books
+const [recentBooks, setRecentBooks] = createSignal<RecentBook[]>([]);
+
 async function getStore() {
   if (!storeInstance) {
     storeInstance = await load('settings.json');
@@ -21,15 +25,28 @@ async function getStore() {
   return storeInstance;
 }
 
-export async function getRecentBooks(): Promise<RecentBook[]> {
+async function loadFromStore(): Promise<RecentBook[]> {
   const store = await getStore();
   const books = await store.get<RecentBook[]>(STORE_KEY);
   return books || [];
 }
 
+// Initialize on first import
+loadFromStore().then(books => {
+  setRecentBooks(books);
+});
+
+export function getRecentBooksSignal() {
+  return recentBooks;
+}
+
+export async function getRecentBooks(): Promise<RecentBook[]> {
+  return recentBooks();
+}
+
 export async function addRecentBook(path: string): Promise<void> {
   const store = await getStore();
-  const books = await getRecentBooks();
+  const books = recentBooks();
   
   // Remove existing entry if present
   const filtered = books.filter(book => book.path !== path);
@@ -42,19 +59,28 @@ export async function addRecentBook(path: string): Promise<void> {
   
   await store.set(STORE_KEY, updated);
   await store.save();
+  
+  // Update reactive signal
+  setRecentBooks(updated);
 }
 
 export async function removeRecentBook(path: string): Promise<void> {
   const store = await getStore();
-  const books = await getRecentBooks();
+  const books = recentBooks();
   const filtered = books.filter(book => book.path !== path);
   
   await store.set(STORE_KEY, filtered);
   await store.save();
+  
+  // Update reactive signal
+  setRecentBooks(filtered);
 }
 
 export async function clearRecentBooks(): Promise<void> {
   const store = await getStore();
   await store.set(STORE_KEY, []);
   await store.save();
+  
+  // Update reactive signal
+  setRecentBooks([]);
 }

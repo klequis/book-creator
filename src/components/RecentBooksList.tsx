@@ -1,5 +1,5 @@
-import { Component, createSignal, onMount, Show, For } from 'solid-js';
-import { getRecentBooks, type RecentBook } from '../utils/recentBooks';
+import { Component, createSignal, Show, For } from 'solid-js';
+import { getRecentBooksSignal } from '../utils/recentBooks';
 import './RecentBooksList.css';
 
 interface RecentBooksListProps {
@@ -7,13 +7,8 @@ interface RecentBooksListProps {
 }
 
 export const RecentBooksList: Component<RecentBooksListProps> = (props) => {
-  const [recentBooks, setRecentBooks] = createSignal<RecentBook[]>([]);
   const [expanded, setExpanded] = createSignal(false);
-
-  onMount(async () => {
-    const books = await getRecentBooks();
-    setRecentBooks(books);
-  });
+  const recentBooks = getRecentBooksSignal();
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
