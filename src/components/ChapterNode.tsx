@@ -4,13 +4,13 @@ import { FileNode } from './FileNode';
 import { ContextMenu } from './ContextMenu';
 import { InlineInput } from './InlineInput';
 import { invoke } from '@tauri-apps/api/core';
+import { bookStoreActions } from '../stores/bookStore';
 import './TreeView.css';
 
 interface ChapterNodeProps {
   chapter: Chapter;
   sections: Section[];
   onFileSelect: (filePath: string | null) => void;
-  onSectionsReordered?: () => void;
 }
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
@@ -113,7 +113,7 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
       setAddingSection(null);
 
       // Trigger refresh
-      props.onSectionsReordered?.();
+      await bookStoreActions.refreshBook();
     } catch (error) {
       console.error('Failed to add section:', error);
       alert(`Failed to add section: ${error}`);
@@ -183,7 +183,7 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
       console.log('Files renamed successfully');
 
       // Trigger refresh
-      props.onSectionsReordered?.();
+      await bookStoreActions.refreshBook();
     } catch (error) {
       console.error('Failed to move section:', error);
       alert(`Failed to move section: ${error}`);

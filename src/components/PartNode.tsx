@@ -10,7 +10,6 @@ interface PartNodeProps {
   isIntroduction?: boolean;
   isAppendix?: boolean;
   onFileSelect: (filePath: string | null) => void;
-  onSectionsReordered?: () => void;
 }
 
 export const PartNode: Component<PartNodeProps> = (props) => {
@@ -52,7 +51,7 @@ export const PartNode: Component<PartNodeProps> = (props) => {
           <For each={props.chapters}>
             {(chapter) => {
               const chapterSections = getSectionsForChapter(chapter.id);
-              return <ChapterNode chapter={chapter} sections={chapterSections} onFileSelect={props.onFileSelect} onSectionsReordered={props.onSectionsReordered} />;
+              return <ChapterNode chapter={chapter} sections={chapterSections} onFileSelect={props.onFileSelect} />;
             }}
           </For>
         </div>

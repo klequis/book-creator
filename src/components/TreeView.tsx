@@ -1,7 +1,7 @@
-import { Component, createSignal, createResource, Show, createEffect, onMount } from 'solid-js';
+import { Component, createSignal, Show, createEffect, onMount } from 'solid-js';
 import { open } from '@tauri-apps/plugin-dialog';
 import { load } from '@tauri-apps/plugin-store';
-import { bookService } from '../services/bookService';
+import { bookStore, bookStoreActions } from '../stores/bookStore';
 import { Book } from './Book';
 import './TreeView.css';
 
@@ -14,7 +14,6 @@ interface TreeViewProps {
 export const TreeView: Component<TreeViewProps> = (props) => {
   const [bookPath, setBookPath] = createSignal<string>('');
   const [zoom, setZoom] = createSignal(180);
-  const [refreshTrigger, setRefreshTrigger] = createSignal(0);
   let store: Awaited<ReturnType<typeof load>> | null = null;
 
   const saveZoom = async (newZoom: number) => {
@@ -55,6 +54,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       if (savedPath) {
         console.log('Restored book path:', savedPath);
         setBookPath(savedPath);
+        await bookStoreActions.loadBook(savedPath);
       }
       const savedZoom = await store.get<number>('treeZoom');
       if (savedZoom) {
@@ -68,23 +68,13 @@ export const TreeView: Component<TreeViewProps> = (props) => {
     }
   });
   
-  const [structure] = createResource(
-    () => {
-      const trigger = refreshTrigger();
-      const path = bookPath();
-      console.log('[TreeView] Resource source updated:', { path, trigger });
-      return [path, trigger] as const;
-    },
-    async ([path]) => {
-      if (!path) return null;
-      console.log('[TreeView] Fetching book structure for:', path);
-      const result = await bookService.getStructure(path);
-      console.log('[TreeView] Book structure loaded. Sections:', result?.sections.length);
+  // Watch for bookPath changes and load book
+  createEffect(async () => {
+    const path = bookPath();
+    if (path && path !== bookStore.rootPath) {
+      await bookStoreActions.loadBook(path);
       
-      // Notify parent of resources path
-      props.onResourcesPathChange(result?.resourcesPath || null);
-      
-      // Save the path when successfully loaded
+      // Save the path
       try {
         if (!store) {
           store = await load('settings.json');
@@ -95,13 +85,12 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       } catch (err) {
         console.error('Failed to save path:', err);
       }
-      
-      return result;
     }
-  );
+  });
 
+  // Notify parent of resources path changes
   createEffect(() => {
-      console.log('structure():', structure());
+    props.onResourcesPathChange(bookStore.resourcesPath);
   });
 
   const selectFolder = async () => {
@@ -129,9 +118,9 @@ export const TreeView: Component<TreeViewProps> = (props) => {
         <button 
           class="browse-button" 
           onClick={selectFolder}
-          disabled={structure.loading}
+          disabled={bookStore.loading}
         >
-          {structure.loading ? '⏳ Loading...' : '📁 Select Book Folder...'}
+          {bookStore.loading ? '⏳ Loading...' : '📁 Select Book Folder...'}
         </button>
         <div class="zoom-controls">
           <button onClick={zoomOut} title="Zoom out">−</button>
@@ -140,39 +129,39 @@ export const TreeView: Component<TreeViewProps> = (props) => {
         </div>
       </div>
 
-      <Show when={structure.error}>
+      <Show when={bookStore.error}>
         <div class="error-message">
-          {structure.error instanceof Error ? structure.error.message : 'Failed to load book'}
+          {bookStore.error}
         </div>
       </Show>
 
       {/* Debug display */}
       <div style="padding: 12px; color: #858585; font-size: 11px;">
         {(() => {
-          const hasContent = structure() && (
-            structure()!.chapters.length > 0 ||
-            structure()!.sections.length > 0
-          );
+          const hasContent = bookStore.chapters.length > 0 || bookStore.sections.length > 0;
           return `Structure loaded: ${hasContent ? 'YES' : 'NO'}`;
         })()}
-        {structure() && (
+        <Show when={bookStore.rootPath}>
           <div>
-            Book Parts: {structure()!.bookParts.length} | 
-            Chapters: {structure()!.chapters.length} | 
-            Sections: {structure()!.sections.length}
+            Book Parts: {bookStore.bookParts.length} | 
+            Chapters: {bookStore.chapters.length} | 
+            Sections: {bookStore.sections.length}
             <br />
-            Introduction: {structure()!.chapters.filter(ch => ch.isIntroduction).length > 0 ? 'YES' : 'NO'} | 
-            Appendices: {structure()!.chapters.filter(ch => ch.isAppendix).length}
+            Introduction: {bookStore.chapters.filter(ch => ch.isIntroduction).length > 0 ? 'YES' : 'NO'} | 
+            Appendices: {bookStore.chapters.filter(ch => ch.isAppendix).length}
           </div>
-        )}
+        </Show>
       </div>
 
       <div class="tree-content-wrapper" style={{ "font-size": `${zoom()}%` }}>
-        <Show when={structure()}>
-          {(s) => <Book structure={s()} onFileSelect={props.onFileSelect} onRefresh={() => setRefreshTrigger(prev => prev + 1)} />}
+        <Show when={bookStore.rootPath && !bookStore.loading}>
+          <Book 
+            structure={bookStore} 
+            onFileSelect={props.onFileSelect} 
+          />
         </Show>
 
-        <Show when={!structure.loading && !structure() && !structure.error}>
+        <Show when={!bookStore.loading && !bookStore.rootPath && !bookStore.error}>
           <div class="empty-state">
             <p>Click "Select Book Folder" to get started</p>
           </div>
