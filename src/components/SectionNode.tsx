@@ -22,7 +22,7 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
   const [menuPosition, setMenuPosition] = createSignal({ x: 0, y: 0 });
 
   const handleClick = () => {
-    props.onFileSelect(props.file.filePath);
+    props.onFileSelect(props.section.filePath);
   };
 
   const handleContextMenu = (e: MouseEvent) => {
@@ -32,7 +32,7 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
   };
 
   const getLevelClass = () => {
-    return `file-node file-level-${props.file.level}`;
+    return `file-node file-level-${props.section.level}`;
   };
 
   return (
@@ -43,7 +43,7 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
         onContextMenu={handleContextMenu}
       >
         <span class="file-icon">📄</span>
-        <span class="file-label">{props.file.displayLabel}</span>
+        <span class="file-label">{props.section.displayLabel}</span>
       </div>
       
       <Show when={showContextMenu()}>
@@ -52,35 +52,33 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
           y={menuPosition().y}
           onClose={() => setShowContextMenu(false)}
           items={[
-            props.onAddSectionAbove && {
+            props.onAddSection && {
               label: 'Add Section Above',
               onClick: () => {
-                props.onAddSectionAbove?.();
+                props.onAddSection?.('above');
                 setShowContextMenu(false);
               }
             },
-            props.onAddSectionBelow && {
+            props.onAddSection && {
               label: 'Add Section Below',
               onClick: () => {
-                props.onAddSectionBelow?.();
+                props.onAddSection?.('below');
                 setShowContextMenu(false);
               }
             },
-            props.onMoveUp && {
+            props.onMove && !props.metadata.isFirst && {
               label: 'Move Up',
               onClick: () => {
-                props.onMoveUp?.();
+                props.onMove?.('up');
                 setShowContextMenu(false);
-              },
-              disabled: !props.canMoveUp
+              }
             },
-            props.onMoveDown && {
+            props.onMove && !props.metadata.isLast && {
               label: 'Move Down',
               onClick: () => {
-                props.onMoveDown?.();
+                props.onMove?.('down');
                 setShowContextMenu(false);
-              },
-              disabled: !props.canMoveDown
+              }
             }
           ].filter(Boolean) as Array<{label: string; onClick: () => void; disabled?: boolean}>}
         />
