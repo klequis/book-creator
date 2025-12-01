@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "",
   "type": "module",
+  "auathors": [
+    "Carl Becker (klequis)"
+  ],
   "scripts": {
     "start": "vite",
     "dev": "vite",

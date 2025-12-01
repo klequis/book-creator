@@ -26,7 +26,7 @@ export class BookService {
     this.cache = null;
   }
 
-  private async scanWorkspace(rootPath: string): Promise<Book> {
+  async scanWorkspace(rootPath: string): Promise<Book> {
     const bookParts: BookPart[] = [];
     const chapters: Chapter[] = [];
     const sections: Section[] = [];
@@ -276,13 +276,13 @@ export class BookService {
     // Build display label
     let displayLabel = '';
     if (level === 0) {
-      displayLabel = `${parseInt(chapterNum)}. Chapter Title Page`;
+      displayLabel = `${parseInt(chapterNum)} Chapter Title Page`;
     } else if (level === 1) {
-      displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}. ${titleText}`;
+      displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)} ${titleText}`;
     } else if (level === 2) {
-      displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}. ${titleText}`;
+      displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)} ${titleText}`;
     } else {
-      displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}.${parseInt(section4Num || '0')}. ${titleText}`;
+      displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}.${parseInt(section4Num || '0')} ${titleText}`;
     }
 
     const sectionId = `${chapterId}-${section2Num}-${section3Num}-${section4Num || '00'}`;

@@ -1,6 +1,8 @@
 import { Component, createSignal, Show } from 'solid-js';
 import type { Section } from '../types/book';
 import { ContextMenu } from './ContextMenu';
+import { InlineInput } from './InlineInput';
+import { bookStoreActions } from '../stores/bookStore';
 import './TreeView.css';
 
 interface SectionMetadata {
@@ -20,6 +22,7 @@ interface SectionNodeProps {
 export const SectionNode: Component<SectionNodeProps> = (props) => {
   const [showContextMenu, setShowContextMenu] = createSignal(false);
   const [menuPosition, setMenuPosition] = createSignal({ x: 0, y: 0 });
+  const [isRenaming, setIsRenaming] = createSignal(false);
 
   const handleClick = () => {
     props.onFileSelect(props.section.filePath);
@@ -31,20 +34,42 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
     setShowContextMenu(true);
   };
 
+  const handleRename = async (newTitle: string) => {
+    setIsRenaming(false);
+    if (newTitle && newTitle.trim() !== props.section.title) {
+      await bookStoreActions.renameSection(props.section.id, newTitle.trim());
+    }
+  };
+
   const getLevelClass = () => {
     return `file-node file-level-${props.section.level}`;
   };
 
   return (
     <>
-      <div 
-        class={getLevelClass()} 
-        onClick={handleClick}
-        onContextMenu={handleContextMenu}
+      <Show 
+        when={!isRenaming()}
+        fallback={
+          <div class={getLevelClass()}>
+            <span class="file-icon">📄</span>
+            <InlineInput
+              initialValue={props.section.title}
+              placeholder="Section name..."
+              onSave={handleRename}
+              onCancel={() => setIsRenaming(false)}
+            />
+          </div>
+        }
       >
-        <span class="file-icon">📄</span>
-        <span class="file-label">{props.section.displayLabel}</span>
-      </div>
+        <div 
+          class={getLevelClass()} 
+          onClick={handleClick}
+          onContextMenu={handleContextMenu}
+        >
+          <span class="file-icon">📄</span>
+          <span class="file-label">{props.section.displayLabel}</span>
+        </div>
+      </Show>
       
       <Show when={showContextMenu()}>
         <ContextMenu
@@ -52,6 +77,13 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
           y={menuPosition().y}
           onClose={() => setShowContextMenu(false)}
           items={[
+            {
+              label: 'Rename',
+              onClick: () => {
+                setShowContextMenu(false);
+                setIsRenaming(true);
+              }
+            },
             props.onAddSection && {
               label: 'Add Section Above',
               onClick: () => {

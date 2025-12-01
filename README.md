@@ -119,4 +119,4 @@ MIT
 
 ## Author
 
-Carl Becker
+Carl Becker (klequis)

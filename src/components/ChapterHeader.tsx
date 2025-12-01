@@ -20,9 +20,9 @@ export const ChapterHeader: Component<ChapterHeaderProps> = (props) => {
     const num = props.chapter.chapterNum;
     const title = props.chapter.title;
     if (num.match(/^\d+$/)) {
-      return `${parseInt(num)}. ${title}`;
+      return `${parseInt(num)} ${title}`;
     }
-    return `${num}. ${title}`;
+    return `${num} ${title}`;
   };
 
   return (

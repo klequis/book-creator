@@ -2,6 +2,7 @@ import { createSignal, onMount } from 'solid-js';
 import { TreeView } from "./components/TreeView";
 import { MarkdownPreview } from "./components/MarkdownPreview";
 import { MarkdownEditor } from "./components/MarkdownEditor";
+import { NotificationContainer } from "./components/NotificationContainer";
 import { restoreWindowState, setupWindowStateListeners } from "./utils/windowManager";
 import "./App.css";
 
@@ -20,6 +21,7 @@ function App() {
 
   return (
     <div class="app">
+      <NotificationContainer />
       <div class="app-layout">
         <div class="sidebar" style={{ width: `${sidebarWidth()}px` }}>
           <TreeView onFileSelect={setSelectedFile} onZoomChange={setTreeZoom} onResourcesPathChange={setResourcesPath} />
