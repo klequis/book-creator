@@ -319,16 +319,16 @@ function parseFileName(
     level = 3;
   }
 
-  const indent = '  '.repeat(level);
+  // Build display label
   let displayLabel = '';
   if (level === 0) {
-    displayLabel = `${parseInt(chapterNum)}. ${titleText}`;
+    displayLabel = `${parseInt(chapterNum)}. Chapter Title Page`;
   } else if (level === 1) {
-    displayLabel = `${indent}${parseInt(chapterNum)}.${parseInt(section2Num)}. ${titleText}`;
+    displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}. ${titleText}`;
   } else if (level === 2) {
-    displayLabel = `${indent}${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}. ${titleText}`;
+    displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}. ${titleText}`;
   } else {
-    displayLabel = `${indent}${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}.${parseInt(section4Num || '0')}. ${titleText}`;
+    displayLabel = `${parseInt(chapterNum)}.${parseInt(section2Num)}.${parseInt(section3Num)}.${parseInt(section4Num || '0')}. ${titleText}`;
   }
 
   const sectionId = `${chapterId}-${section2Num}-${section3Num}-${section4Num || '00'}`;

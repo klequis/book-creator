@@ -1,8 +1,9 @@
 import { Component, createSignal, For, Show } from 'solid-js';
 import type { Chapter, Section } from '../types/book';
-import { FileNode } from './FileNode';
+import { SectionNode } from './SectionNode';
 import { ContextMenu } from './ContextMenu';
 import { InlineInput } from './InlineInput';
+import { ChapterHeader } from './ChapterHeader';
 import { invoke } from '@tauri-apps/api/core';
 import { bookStoreActions } from '../stores/bookStore';
 import './TreeView.css';
@@ -14,13 +15,8 @@ interface ChapterNodeProps {
 }
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
-  const [expanded, setExpanded] = createSignal(true);
   const [contextMenu, setContextMenu] = createSignal<{ x: number; y: number } | null>(null);
   const [addingSection, setAddingSection] = createSignal<{ index: number; position: 'above' | 'below' } | null>(null);
-
-  const toggleExpand = () => {
-    setExpanded(!expanded());
-  };
 
   const handleContextMenu = (e: MouseEvent) => {
     e.preventDefault();
@@ -121,99 +117,31 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
     }
   };
 
-  const getDisplayTitle = () => {
-    const num = props.chapter.chapterNum;
-    const title = props.chapter.title;
-    // Handle numeric chapters and appendix chapters (A, B, C)
-    if (num.match(/^\d+$/)) {
-      return `${parseInt(num)}. ${title}`;
-    }
-    return `${num}. ${title}`;
-  };
-
-  const moveSection = async (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return;
-    if (direction === 'down' && index === props.sections.length - 1) return;
-
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    const section1 = props.sections[index];
-    const section2 = props.sections[newIndex];
-
-    console.log('Moving section:', { section1, section2, direction });
-
-    try {
-      // Generate new filenames with swapped positions
-      const getNewFileName = (section: Section, newNumbers: { s2: string, s3: string, s4: string }) => {
-        const { chapterNum, title } = section;
-        return `${chapterNum}-${newNumbers.s2}-${newNumbers.s3}-${newNumbers.s4} ${title}.md`;
-      };
-
-      const section1Numbers = { s2: section1.section2Num, s3: section1.section3Num, s4: section1.section4Num };
-      const section2Numbers = { s2: section2.section2Num, s3: section2.section3Num, s4: section2.section4Num };
-
-      const newFileName1 = getNewFileName(section1, section2Numbers);
-      const newFileName2 = getNewFileName(section2, section1Numbers);
-
-      const newPath1 = `${props.chapter.folderPath}/${newFileName1}`;
-      const newPath2 = `${props.chapter.folderPath}/${newFileName2}`;
-
-      console.log('Renaming files:', {
-        from1: section1.filePath, to1: newPath1,
-        from2: section2.filePath, to2: newPath2
-      });
-
-      // Use temp file to avoid conflicts
-      const tempPath = `${props.chapter.folderPath}/.temp-swap-${Date.now()}.md`;
-      
-      await invoke('rename_path', { 
-        oldPath: section1.filePath, 
-        newPath: tempPath 
-      });
-      
-      await invoke('rename_path', { 
-        oldPath: section2.filePath, 
-        newPath: newPath1 
-      });
-      
-      await invoke('rename_path', { 
-        oldPath: tempPath, 
-        newPath: newPath2 
-      });
-
-      console.log('Files renamed successfully');
-
-      // Trigger refresh
-      await bookStoreActions.refreshBook();
-    } catch (error) {
-      console.error('Failed to move section:', error);
-      alert(`Failed to move section: ${error}`);
-    }
+  const handleMoveSection = async (index: number, direction: 'up' | 'down') => {
+    await moveSection(props.sections, props.chapter.folderPath, index, direction);
   };
 
   return (
     <div class="chapter-node">
-      <div class="chapter-header" onClick={toggleExpand} onContextMenu={handleContextMenu}>
-        <span class="expand-icon">{expanded() ? '▼' : '▶'}</span>
-        <span class="chapter-title">{getDisplayTitle()}</span>
-        <span class="file-count">({props.sections.length})</span>
-      </div>
+      <ChapterHeader
+        chapter={props.chapter}
+        sectionCount={props.sections.length}
+        onContextMenu={handleContextMenu}
+      >
+        <Show when={contextMenu()}>
+          <ContextMenu
+            x={contextMenu()!.x}
+            y={contextMenu()!.y}
+            onClose={() => setContextMenu(null)}
+            items={[
+              { label: 'Add Section', onClick: handleAddSection }
+            ]}
+          />
+        </Show>
 
-      <Show when={contextMenu()}>
-        <ContextMenu
-          x={contextMenu()!.x}
-          y={contextMenu()!.y}
-          onClose={() => setContextMenu(null)}
-          items={[
-            { label: 'Add Section', onClick: handleAddSection }
-          ]}
-        />
-      </Show>
-
-      <Show when={expanded()}>
-        <div class="files-container">
+        <div class="sections-container">
           <For each={props.sections}>
             {(file, index) => {
-              const isChapterTitle = file.level === 0;
               const showInputAbove = () => {
                 const adding = addingSection();
                 return adding && adding.index === index() && adding.position === 'above';
@@ -232,15 +160,16 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
                       onCancel={() => setAddingSection(null)}
                     />
                   </Show>
-                  <FileNode 
-                    file={file} 
+                  <SectionNode 
+                    section={file}
+                    metadata={{
+                      isFirst: index() === 0,
+                      isLast: index() === props.sections.length - 1,
+                      isChapterTitle: file.level === 0
+                    }}
                     onFileSelect={props.onFileSelect}
-                    onMoveUp={!isChapterTitle ? () => moveSection(index(), 'up') : undefined}
-                    onMoveDown={!isChapterTitle ? () => moveSection(index(), 'down') : undefined}
-                    canMoveUp={!isChapterTitle && index() > 0}
-                    canMoveDown={!isChapterTitle && index() < props.sections.length - 1}
-                    onAddSectionAbove={!isChapterTitle ? () => startAddingSection(index(), 'above') : undefined}
-                    onAddSectionBelow={() => startAddingSection(index(), 'below')}
+                    onMove={(direction) => handleMoveSection(index(), direction)}
+                    onAddSection={(position) => startAddingSection(index(), position)}
                   />
                   <Show when={showInputBelow()}>
                     <InlineInput
@@ -254,7 +183,71 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
             }}
           </For>
         </div>
-      </Show>
+      </ChapterHeader>
     </div>
   );
 };
+
+async function moveSection(
+  sections: Section[],
+  chapterFolderPath: string,
+  index: number,
+  direction: 'up' | 'down'
+) {
+  if (direction === 'up' && index === 0) return;
+  if (direction === 'down' && index === sections.length - 1) return;
+
+  const newIndex = direction === 'up' ? index - 1 : index + 1;
+  const section1 = sections[index];
+  const section2 = sections[newIndex];
+
+  console.log('Moving section:', { section1, section2, direction });
+
+  try {
+    // Generate new filenames with swapped positions
+    const getNewFileName = (section: Section, newNumbers: { s2: string, s3: string, s4: string }) => {
+      const { chapterNum, title } = section;
+      return `${chapterNum}-${newNumbers.s2}-${newNumbers.s3}-${newNumbers.s4} ${title}.md`;
+    };
+
+    const section1Numbers = { s2: section1.section2Num, s3: section1.section3Num, s4: section1.section4Num };
+    const section2Numbers = { s2: section2.section2Num, s3: section2.section3Num, s4: section2.section4Num };
+
+    const newFileName1 = getNewFileName(section1, section2Numbers);
+    const newFileName2 = getNewFileName(section2, section1Numbers);
+
+    const newPath1 = `${chapterFolderPath}/${newFileName1}`;
+    const newPath2 = `${chapterFolderPath}/${newFileName2}`;
+
+    console.log('Renaming files:', {
+      from1: section1.filePath, to1: newPath1,
+      from2: section2.filePath, to2: newPath2
+    });
+
+    // Use temp file to avoid conflicts
+    const tempPath = `${chapterFolderPath}/.temp-swap-${Date.now()}.md`;
+    
+    await invoke('rename_path', { 
+      oldPath: section1.filePath, 
+      newPath: tempPath 
+    });
+    
+    await invoke('rename_path', { 
+      oldPath: section2.filePath, 
+      newPath: newPath1 
+    });
+    
+    await invoke('rename_path', { 
+      oldPath: tempPath, 
+      newPath: newPath2 
+    });
+
+    console.log('Files renamed successfully');
+
+    // Trigger refresh
+    await bookStoreActions.refreshBook();
+  } catch (error) {
+    console.error('Failed to move section:', error);
+    alert(`Failed to move section: ${error}`);
+  }
+}

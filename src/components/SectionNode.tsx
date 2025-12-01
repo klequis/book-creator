@@ -3,18 +3,21 @@ import type { Section } from '../types/book';
 import { ContextMenu } from './ContextMenu';
 import './TreeView.css';
 
-interface FileNodeProps {
-  file: Section;
-  onFileSelect: (filePath: string | null) => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
-  onAddSectionAbove?: () => void;
-  onAddSectionBelow?: () => void;
+interface SectionMetadata {
+  isFirst: boolean;
+  isLast: boolean;
+  isChapterTitle: boolean;
 }
 
-export const FileNode: Component<FileNodeProps> = (props) => {
+interface SectionNodeProps {
+  section: Section;
+  metadata: SectionMetadata;
+  onFileSelect: (filePath: string | null) => void;
+  onMove?: (direction: 'up' | 'down') => void;
+  onAddSection?: (position: 'above' | 'below') => void;
+}
+
+export const SectionNode: Component<SectionNodeProps> = (props) => {
   const [showContextMenu, setShowContextMenu] = createSignal(false);
   const [menuPosition, setMenuPosition] = createSignal({ x: 0, y: 0 });
 
