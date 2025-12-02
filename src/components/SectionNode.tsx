@@ -105,12 +105,12 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
               }
             },
             {
-              label: 'Promote Level ↑',
+              label: '◀ Promote Level',
               onClick: handlePromote,
               disabled: !canPromote()
             },
             {
-              label: 'Demote Level ↓',
+              label: '▶ Demote Level',
               onClick: handleDemote,
               disabled: !canDemote()
             },
