@@ -1,6 +1,7 @@
 import { Component, createResource, Show, createSignal, onMount } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import MarkdownIt from 'markdown-it';
+import { markdownKeywordPlugin } from '../utils/markdownKeywordPlugin';
 import { load } from '@tauri-apps/plugin-store';
 import './MarkdownPreview.css';
 
@@ -9,6 +10,9 @@ const md = new MarkdownIt({
   linkify: true,     // Autoconvert URL-like text to links
   typographer: true  // Enable smartquotes and other sweet transforms
 });
+
+// Apply custom keyword plugin
+md.use(markdownKeywordPlugin);
 
 interface MarkdownPreviewProps {
   filePath: string | null;

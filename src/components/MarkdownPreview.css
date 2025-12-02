@@ -205,3 +205,9 @@
   border-top: 2px solid #3e3e3e;
   margin: 2rem 0;
 }
+
+/* Custom keyword styling */
+.preview-content .keyword {
+  color: #4fc3f7;
+  font-weight: 500;
+}
