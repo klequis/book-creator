@@ -1,8 +1,14 @@
 import { Component, createResource, Show, createSignal, onMount } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
-import { marked } from 'marked';
+import MarkdownIt from 'markdown-it';
 import { load } from '@tauri-apps/plugin-store';
 import './MarkdownPreview.css';
+
+const md = new MarkdownIt({
+  html: true,        // Enable HTML tags in source
+  linkify: true,     // Autoconvert URL-like text to links
+  typographer: true  // Enable smartquotes and other sweet transforms
+});
 
 interface MarkdownPreviewProps {
   filePath: string | null;
@@ -133,7 +139,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
           }
         }
         
-        const html = await marked(markdown);
+        const html = md.render(markdown);
         return html;
       } catch (error) {
         console.error('Failed to load file:', error);
