@@ -41,6 +41,26 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
     }
   };
 
+  const handlePromote = async () => {
+    setShowContextMenu(false);
+    await bookStoreActions.promoteSection(props.section.id);
+  };
+
+  const handleDemote = async () => {
+    setShowContextMenu(false);
+    await bookStoreActions.demoteSection(props.section.id);
+  };
+
+  const canPromote = () => {
+    // Only levels 2-3 can be promoted
+    return props.section.level >= 2 && props.section.level <= 3;
+  };
+
+  const canDemote = () => {
+    // Only levels 1-2 can be demoted
+    return props.section.level >= 1 && props.section.level <= 2;
+  };
+
   const getLevelClass = () => {
     return `file-node file-level-${props.section.level}`;
   };
@@ -83,6 +103,16 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
                 setShowContextMenu(false);
                 setIsRenaming(true);
               }
+            },
+            {
+              label: 'Promote Level ↑',
+              onClick: handlePromote,
+              disabled: !canPromote()
+            },
+            {
+              label: 'Demote Level ↓',
+              onClick: handleDemote,
+              disabled: !canDemote()
             },
             props.onAddSection && {
               label: 'Add Section Above',

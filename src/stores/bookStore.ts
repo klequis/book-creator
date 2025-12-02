@@ -227,8 +227,241 @@ export const bookStoreActions = {
       showError(`Failed to rename section: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
+  },
+
+  /**
+   * Optimistically promote a section to a higher level (decrease level number)
+   * Level 2 -> Level 1, or Level 3 -> Level 2
+   */
+  async promoteSection(sectionId: string) {
+    const section = bookStore.sections.find(s => s.id === sectionId);
+    if (!section) {
+      showError('Section not found');
+      return false;
+    }
+
+    if (!canPromote(section)) {
+      showError('Cannot promote this section (only levels 2-3 can be promoted)');
+      return false;
+    }
+
+    // Store old values for rollback
+    const oldSection = { ...section };
+    const newLevel = section.level - 1;
+
+    // Build new section numbers based on promotion
+    let newSection2Num = section.section2Num;
+    let newSection3Num = section.section3Num;
+    let newSection4Num = section.section4Num;
+
+    if (section.level === 2) {
+      // Level 2 -> Level 1: keep section2Num, clear section3Num
+      newSection3Num = '';
+      newSection4Num = '';
+    } else if (section.level === 3) {
+      // Level 3 -> Level 2: keep section2Num and section3Num, clear section4Num
+      newSection4Num = '';
+    }
+
+    // Build new filename
+    let newFileName: string;
+    if (newLevel === 1) {
+      newFileName = `${section.chapterNum}.${newSection2Num} ${section.title}.md`;
+    } else if (newLevel === 2) {
+      newFileName = `${section.chapterNum}.${newSection2Num}.${newSection3Num} ${section.title}.md`;
+    } else {
+      newFileName = section.fileName;
+    }
+
+    const newPath = section.filePath.replace(section.fileName, newFileName);
+    const newDisplayLabel = buildDisplayLabel(
+      section.chapterNum,
+      newSection2Num,
+      newSection3Num,
+      newSection4Num,
+      newLevel,
+      section.title
+    );
+
+    // Calculate new heading markdown (fewer # symbols)
+    const headingPrefix = '#'.repeat(newLevel + 1); // level 0=#, level 1=##, etc.
+    const newHeading = buildHeading({...section, level: newLevel, section2Num: newSection2Num, section3Num: newSection3Num, section4Num: newSection4Num}, section.title);
+
+    try {
+      // 1. Optimistically update UI
+      this.updateSection(sectionId, {
+        level: newLevel,
+        section2Num: newSection2Num,
+        section3Num: newSection3Num,
+        section4Num: newSection4Num,
+        fileName: newFileName,
+        filePath: newPath,
+        displayLabel: newDisplayLabel
+      });
+
+      // 2. Update filesystem
+      await invoke('rename_path', {
+        oldPath: oldSection.filePath,
+        newPath: newPath
+      });
+
+      // 3. Update file content (the heading)
+      const oldContent = await invoke<string>('read_file', { path: newPath });
+      const newContent = oldContent.replace(
+        new RegExp(`^(#{1,4})\\s+.*$`, 'm'),
+        `${headingPrefix} ${newHeading}`
+      );
+      await invoke('write_file', {
+        path: newPath,
+        contents: newContent
+      });
+
+      showSuccess('Section promoted successfully');
+      return true;
+    } catch (error) {
+      // 4. Rollback on failure
+      console.error('[BookStore] Failed to promote section:', error);
+      this.updateSection(sectionId, oldSection);
+      showError(`Failed to promote section: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
+  },
+
+  /**
+   * Optimistically demote a section to a lower level (increase level number)
+   * Level 1 -> Level 2, or Level 2 -> Level 3
+   */
+  async demoteSection(sectionId: string) {
+    const section = bookStore.sections.find(s => s.id === sectionId);
+    if (!section) {
+      showError('Section not found');
+      return false;
+    }
+
+    if (!canDemote(section)) {
+      showError('Cannot demote this section (only levels 1-2 can be demoted)');
+      return false;
+    }
+
+    // Store old values for rollback
+    const oldSection = { ...section };
+    const newLevel = section.level + 1;
+
+    // Build new section numbers based on demotion
+    let newSection2Num = section.section2Num;
+    let newSection3Num = section.section3Num;
+    let newSection4Num = section.section4Num;
+
+    if (section.level === 1) {
+      // Level 1 -> Level 2: add section3Num
+      newSection3Num = getNextSectionNumber(bookStore.sections, section.chapterNum, section.section2Num, '', 2);
+    } else if (section.level === 2) {
+      // Level 2 -> Level 3: add section4Num
+      newSection4Num = getNextSectionNumber(bookStore.sections, section.chapterNum, section.section2Num, section.section3Num, 3);
+    }
+
+    // Build new filename
+    let newFileName: string;
+    if (newLevel === 2) {
+      newFileName = `${section.chapterNum}.${newSection2Num}.${newSection3Num} ${section.title}.md`;
+    } else if (newLevel === 3) {
+      newFileName = `${section.chapterNum}.${newSection2Num}.${newSection3Num}.${newSection4Num} ${section.title}.md`;
+    } else {
+      newFileName = section.fileName;
+    }
+
+    const newPath = section.filePath.replace(section.fileName, newFileName);
+    const newDisplayLabel = buildDisplayLabel(
+      section.chapterNum,
+      newSection2Num,
+      newSection3Num,
+      newSection4Num,
+      newLevel,
+      section.title
+    );
+
+    // Calculate new heading markdown (more # symbols)
+    const headingPrefix = '#'.repeat(newLevel + 1); // level 0=#, level 1=##, etc.
+    const newHeading = buildHeading({...section, level: newLevel, section2Num: newSection2Num, section3Num: newSection3Num, section4Num: newSection4Num}, section.title);
+
+    try {
+      // 1. Optimistically update UI
+      this.updateSection(sectionId, {
+        level: newLevel,
+        section2Num: newSection2Num,
+        section3Num: newSection3Num,
+        section4Num: newSection4Num,
+        fileName: newFileName,
+        filePath: newPath,
+        displayLabel: newDisplayLabel
+      });
+
+      // 2. Update filesystem
+      await invoke('rename_path', {
+        oldPath: oldSection.filePath,
+        newPath: newPath
+      });
+
+      // 3. Update file content (the heading)
+      const oldContent = await invoke<string>('read_file', { path: newPath });
+      const newContent = oldContent.replace(
+        new RegExp(`^(#{1,4})\\s+.*$`, 'm'),
+        `${headingPrefix} ${newHeading}`
+      );
+      await invoke('write_file', {
+        path: newPath,
+        contents: newContent
+      });
+
+      showSuccess('Section demoted successfully');
+      return true;
+    } catch (error) {
+      // 4. Rollback on failure
+      console.error('[BookStore] Failed to demote section:', error);
+      this.updateSection(sectionId, oldSection);
+      showError(`Failed to demote section: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
   }
 };
+
+// Validation helpers for promote/demote operations
+function canPromote(section: Section): boolean {
+  // Only levels 2 and 3 can be promoted
+  return section.level >= 2 && section.level <= 3;
+}
+
+function canDemote(section: Section): boolean {
+  // Only levels 1 and 2 can be demoted
+  return section.level >= 1 && section.level <= 2;
+}
+
+// Helper to find next available section number when demoting
+function getNextSectionNumber(sections: Section[], chapterNum: string, section2Num: string, section3Num: string, targetLevel: number): string {
+  if (targetLevel === 2) {
+    // Demoting to level 2: find max section3Num for this chapter.section2
+    const sameLevelSections = sections.filter(s => 
+      s.chapterNum === chapterNum && 
+      s.section2Num === section2Num &&
+      s.level === 2
+    );
+    if (sameLevelSections.length === 0) return '01';
+    const maxNum = Math.max(...sameLevelSections.map(s => parseInt(s.section3Num)));
+    return String(maxNum + 1).padStart(2, '0');
+  } else if (targetLevel === 3) {
+    // Demoting to level 3: find max section4Num for this chapter.section2.section3
+    const sameLevelSections = sections.filter(s => 
+      s.chapterNum === chapterNum && 
+      s.section2Num === section2Num &&
+      s.section3Num === section3Num &&
+      s.level === 3
+    );
+    if (sameLevelSections.length === 0) return '01';
+    const maxNum = Math.max(...sameLevelSections.map(s => parseInt(s.section4Num)));
+    return String(maxNum + 1).padStart(2, '0');
+  }
+  return '01';
+}
 
 // Helper function to build display labels
 function buildDisplayLabel(
