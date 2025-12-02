@@ -1,0 +1,186 @@
+{
+  "bookId": "example-book-001",
+  "title": "Example Book Title",
+  "baseDir": "/path/to/book/root",
+  "bookParts": [
+    {
+      "id": "5c2a-8f3b-1d4e-9a7c",
+      "bookPartType": "bookPart",
+      "partId": "part-01",
+      "partNumber": 1,
+      "title": "Part One: Foundation",
+      "chapters": [
+        {
+          "bookPartType": "bookChapter",
+          "chapterId": "chapter-01",
+          "chapterNumber": 1,
+          "title": "Introduction to Core Concepts",
+          "filePath": "Part 1/Chapter 01 - Introduction to Core Concepts.md",
+          "displayLabel": "1 Introduction to Core Concepts",
+          "sections": [
+            {
+              "bookPartType": "bookSection",
+              "sectionId": "section-01-01",
+              "chapterId": "chapter-01",
+              "sectionNumber": 1,
+              "level": 1,
+              "title": "Historical Background",
+              "displayLabel": "1.1 Historical Background",
+              "children": [
+                {
+                  "bookPartType": "bookSection",
+                  "sectionId": "section-01-01-01",
+                  "chapterId": "chapter-01",
+                  "parentId": "section-01-01",
+                  "sectionNumber": 1,
+                  "section2Number": 1,
+                  "level": 2,
+                  "title": "Ancient Origins",
+                  "displayLabel": "1.1.1 Ancient Origins",
+                  "children": [
+                    {
+                      "bookPartType": "bookSection",
+                      "sectionId": "section-01-01-01-01",
+                      "chapterId": "chapter-01",
+                      "parentId": "section-01-01-01",
+                      "sectionNumber": 1,
+                      "section2Number": 1,
+                      "section3Number": 1,
+                      "level": 3,
+                      "title": "Early Manuscripts",
+                      "displayLabel": "1.1.1.1 Early Manuscripts",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "bookPartType": "bookSection",
+                  "sectionId": "section-01-01-02",
+                  "chapterId": "chapter-01",
+                  "parentId": "section-01-01",
+                  "sectionNumber": 1,
+                  "section2Number": 2,
+                  "level": 2,
+                  "title": "Medieval Period",
+                  "displayLabel": "1.1.2 Medieval Period",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "bookPartType": "bookSection",
+              "sectionId": "section-01-02",
+              "chapterId": "chapter-01",
+              "sectionNumber": 2,
+              "level": 1,
+              "title": "Modern Developments",
+              "displayLabel": "1.2 Modern Developments",
+              "children": []
+            }
+          ]
+        },
+        {
+          "bookPartType": "bookChapter",
+          "chapterId": "chapter-02",
+          "chapterNumber": 2,
+          "title": "Key Principles",
+          "filePath": "Part 1/Chapter 02 - Key Principles.md",
+          "displayLabel": "2 Key Principles",
+          "sections": [
+            {
+              "bookPartType": "bookSection",
+              "sectionId": "section-02-01",
+              "chapterId": "chapter-02",
+              "sectionNumber": 1,
+              "level": 1,
+              "title": "First Principle",
+              "displayLabel": "2.1 First Principle",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b8d1-4e2f-a3c5-7f6e",
+      "bookPartType": "bookPart",
+      "partId": "part-02",
+      "partNumber": 2,
+      "title": "Part Two: Advanced Topics",
+      "chapters": [
+        {
+          "bookPartType": "bookChapter",
+          "chapterId": "chapter-03",
+          "chapterNumber": 3,
+          "title": "Complex Systems",
+          "filePath": "Part 2/Chapter 03 - Complex Systems.md",
+          "displayLabel": "3 Complex Systems",
+          "sections": []
+        }
+      ]
+    }
+  ],
+  "standaloneChapters": [
+    {
+      "bookPartType": "bookIntroduction",
+      "chapterId": "chapter-intro",
+      "chapterNumber": 0,
+      "title": "Introduction",
+      "filePath": "Introduction.md",
+      "displayLabel": "Introduction",
+      "sections": [
+        {
+          "bookPartType": "bookSection",
+          "sectionId": "section-intro-01",
+          "chapterId": "chapter-intro",
+          "sectionNumber": 1,
+          "level": 1,
+          "title": "Purpose of This Book",
+          "displayLabel": "Purpose of This Book",
+          "children": []
+        },
+        {
+          "bookPartType": "bookSection",
+          "sectionId": "section-intro-02",
+          "chapterId": "chapter-intro",
+          "sectionNumber": 2,
+          "level": 1,
+          "title": "How to Use This Book",
+          "displayLabel": "How to Use This Book",
+          "children": []
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "bookPartType": "bookAppendix",
+      "chapterId": "appendix-a",
+      "chapterNumber": 0,
+      "title": "Appendix A: Reference Tables",
+      "filePath": "Appendix A - Reference Tables.md",
+      "displayLabel": "Appendix A: Reference Tables",
+      "sections": [
+        {
+          "bookPartType": "bookSection",
+          "sectionId": "section-appendix-a-01",
+          "chapterId": "appendix-a",
+          "sectionNumber": 1,
+          "level": 1,
+          "title": "Table of Constants",
+          "displayLabel": "Table of Constants",
+          "children": []
+        }
+      ]
+    },
+    {
+      "bookPartType": "bookAppendix",
+      "chapterId": "appendix-b",
+      "chapterNumber": 0,
+      "title": "Appendix B: Additional Resources",
+      "filePath": "Appendix B - Additional Resources.md",
+      "displayLabel": "Appendix B: Additional Resources",
+      "sections": []
+    }
+  ]
+}

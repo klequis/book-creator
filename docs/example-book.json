@@ -1,0 +1,146 @@
+{
+  "introduction": {
+    "id": "a1b2-c3d4-e5f6-a7b8",
+    "sections": [
+      {
+        "id": "b2c3-d4e5-f6a7-b8c9",
+        "level": 1,
+        "filePath": "/book/01-Introduction/01-Introduction.md",
+        "order": 1
+      },
+      {
+        "id": "c3d4-e5f6-a7b8-c9d0",
+        "level": 2,
+        "filePath": "/book/01-Introduction/02-why-this-book.md",
+        "parentId": "b2c3-d4e5-f6a7-b8c9",
+        "order": 1
+      },
+      {
+        "id": "d4e5-f6a7-b8c9-d0e1",
+        "level": 2,
+        "filePath": "/book/01-Introduction/03-how-to-use.md",
+        "parentId": "b2c3-d4e5-f6a7-b8c9",
+        "order": 2
+      }
+    ]
+  },
+  "parts": [
+    {
+      "id": "e5f6-a7b8-c9d0-e1f2",
+      "sections": [
+        {
+          "id": "f6a7-b8c9-d0e1-f2a3",
+          "level": 1,
+          "filePath": "/book/02-Part-1/01-Part-1.md",
+          "order": 1
+        }
+      ],
+      "chapters": [
+        {
+          "id": "a7b8-c9d0-e1f2-a3b4",
+          "sections": [
+            {
+              "id": "b8c9-d0e1-f2a3-b4c5",
+              "level": 1,
+              "filePath": "/book/02-Part-1/02-Chapter-1/01-Chapter-1.md",
+              "order": 1
+            },
+            {
+              "id": "c9d0-e1f2-a3b4-c5d6",
+              "level": 2,
+              "filePath": "/book/02-Part-1/02-Chapter-1/02-getting-started.md",
+              "parentId": "b8c9-d0e1-f2a3-b4c5",
+              "order": 1
+            },
+            {
+              "id": "d0e1-f2a3-b4c5-d6e7",
+              "level": 3,
+              "filePath": "/book/02-Part-1/02-Chapter-1/03-installation.md",
+              "parentId": "c9d0-e1f2-a3b4-c5d6",
+              "order": 1
+            },
+            {
+              "id": "e1f2-a3b4-c5d6-e7f8",
+              "level": 3,
+              "filePath": "/book/02-Part-1/02-Chapter-1/04-configuration.md",
+              "parentId": "c9d0-e1f2-a3b4-c5d6",
+              "order": 2
+            },
+            {
+              "id": "f2a3-b4c5-d6e7-f8a9",
+              "level": 2,
+              "filePath": "/book/02-Part-1/02-Chapter-1/05-basic-concepts.md",
+              "parentId": "b8c9-d0e1-f2a3-b4c5",
+              "order": 2
+            }
+          ]
+        },
+        {
+          "id": "a3b4-c5d6-e7f8-a9b0",
+          "sections": [
+            {
+              "id": "b4c5-d6e7-f8a9-b0c1",
+              "level": 1,
+              "filePath": "/book/02-Part-1/03-Chapter-2/01-Chapter-2.md",
+              "order": 1
+            },
+            {
+              "id": "c5d6-e7f8-a9b0-c1d2",
+              "level": 2,
+              "filePath": "/book/02-Part-1/03-Chapter-2/02-advanced-topics.md",
+              "parentId": "b4c5-d6e7-f8a9-b0c1",
+              "order": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "id": "d6e7-f8a9-b0c1-d2e3",
+      "sections": [
+        {
+          "id": "e7f8-a9b0-c1d2-e3f4",
+          "level": 1,
+          "filePath": "/book/03-Standalone-Chapter/01-Standalone-Chapter.md",
+          "order": 1
+        },
+        {
+          "id": "f8a9-b0c1-d2e3-f4a5",
+          "level": 2,
+          "filePath": "/book/03-Standalone-Chapter/02-special-topic.md",
+          "parentId": "e7f8-a9b0-c1d2-e3f4",
+          "order": 1
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "id": "a9b0-c1d2-e3f4-a5b6",
+      "sections": [
+        {
+          "id": "b0c1-d2e3-f4a5-b6c7",
+          "level": 1,
+          "filePath": "/book/99-Appendix-A/01-Appendix-A.md",
+          "order": 1
+        },
+        {
+          "id": "c1d2-e3f4-a5b6-c7d8",
+          "level": 2,
+          "filePath": "/book/99-Appendix-A/02-reference-tables.md",
+          "parentId": "b0c1-d2e3-f4a5-b6c7",
+          "order": 1
+        },
+        {
+          "id": "d2e3-f4a5-b6c7-d8e9",
+          "level": 2,
+          "filePath": "/book/99-Appendix-A/03-glossary.md",
+          "parentId": "b0c1-d2e3-f4a5-b6c7",
+          "order": 2
+        }
+      ]
+    }
+  ]
+}
