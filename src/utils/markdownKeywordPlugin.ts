@@ -57,7 +57,7 @@ function keywordRule(state: StateInline, silent: boolean): boolean {
   
   if (!silent) {
     const token = state.push('keyword', 'span', 0);
-    token.content = state.src.slice(pos, endPos);
+    token.content = state.src.slice(pos + 1, endPos); // Skip the # character
     token.markup = '#';
   }
   
