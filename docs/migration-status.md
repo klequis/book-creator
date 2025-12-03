@@ -21,25 +21,25 @@
 - ✅ **src/components/NewTreeView.tsx**: TreeView using newBookStore
 - ✅ **src/components/RecentBooksList.tsx**: Updated to use newBookStore
 
-## Ready to Replace 🔄
+## Replaced ✅
 
-### Files to Delete (Old System)
-- 🔲 **src/stores/bookStore.ts**: Old store with filesystem scanning
-- 🔲 **src/services/bookService.ts**: Filesystem scanning service (no longer needed)
-- 🔲 **src/components/Book.tsx**: Old component expecting flat structure
-- 🔲 **src/components/PartNode.tsx**: Old component using BookPart type
-- 🔲 **src/components/ChapterNode.tsx**: Old component using old Chapter type
-- 🔲 **src/components/ChapterHeader.tsx**: Old component (may not need equivalent?)
-- 🔲 **src/components/SectionNode.tsx**: Old component using old Section type
-- 🔲 **src/components/TreeView.tsx**: Old TreeView using old bookStore
+### Files Deleted (Old System)
+- ✅ **src/stores/bookStore.ts**: Old store with filesystem scanning
+- ✅ **src/services/bookService.ts**: Filesystem scanning service (no longer needed)
+- ✅ **src/components/Book.tsx**: Old component expecting flat structure
+- ✅ **src/components/PartNode.tsx**: Old component using BookPart type
+- ✅ **src/components/ChapterNode.tsx**: Old component using old Chapter type
+- ✅ **src/components/ChapterHeader.tsx**: Old component (not needed in new system)
+- ✅ **src/components/SectionNode.tsx**: Old component using old Section type
+- ✅ **src/components/TreeView.tsx**: Old TreeView using old bookStore
 
-### Rename New → Replace Old
-- 🔲 Rename NewBook.tsx → Book.tsx
-- 🔲 Rename NewPartNode.tsx → PartNode.tsx
-- 🔲 Rename NewChapterNode.tsx → ChapterNode.tsx
-- 🔲 Rename NewSectionNode.tsx → SectionNode.tsx
-- 🔲 Rename NewTreeView.tsx → TreeView.tsx
-- 🔲 Rename newBookStore.ts → bookStore.ts
+### Renamed New → Final
+- ✅ newBookStore.ts → bookStore.ts
+- ✅ NewBook.tsx → Book.tsx
+- ✅ NewPartNode.tsx → PartNode.tsx
+- ✅ NewChapterNode.tsx → ChapterNode.tsx
+- ✅ NewSectionNode.tsx → SectionNode.tsx
+- ✅ NewTreeView.tsx → TreeView.tsx
 
 ## Integration Work 🔲
 
