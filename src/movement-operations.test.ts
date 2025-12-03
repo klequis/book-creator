@@ -80,21 +80,21 @@ describe('Movement Operations', () => {
       const updates = orderPlus('s2-b', sections);
       
       expect(updates).toHaveLength(2);
-      // After swap: s2-a gets order 2, so filePath should have 02- prefix (matching order, not old position)
+      // After swap: s2-a gets order 2, so newFilePath should have 02- prefix
       expect(updates.find(u => u.id === 's2-a')).toMatchObject({
         id: 's2-a',
         level: 2,
         order: 2,
         parentId: 's1-id',
-        filePath: '/book/01-chapter/02-section-a.md'
+        newFilePath: '/book/01-chapter/02-section-a.md'
       });
-      // After swap: s2-b gets order 1, so filePath should have 01- prefix
+      // After swap: s2-b gets order 1, so newFilePath should have 01- prefix
       expect(updates.find(u => u.id === 's2-b')).toMatchObject({
         id: 's2-b',
         level: 2,
         order: 1,
         parentId: 's1-id',
-        filePath: '/book/01-chapter/01-section-b.md'
+        newFilePath: '/book/01-chapter/01-section-b.md'
       });
     });
     
@@ -109,7 +109,7 @@ describe('Movement Operations', () => {
       
       const movedSection = updates.find(u => u.id === 's2-b');
       // s2-b swaps from order 2 to order 1, so prefix becomes 01
-      expect(movedSection?.filePath).toMatch(/01-second\.md$/);
+      expect(movedSection?.newFilePath).toMatch(/01-second\.md$/);
     });
     
     test('preserves level and parentId on simple swap', () => {
@@ -166,8 +166,8 @@ describe('Movement Operations', () => {
       const updates = orderPlus('s3-id', sections);
       
       const promoted = updates.find(u => u.id === 's3-id');
-      expect(promoted?.filePath).not.toBe('/book/01-chapter/03-child.md');
-      expect(promoted?.filePath).toMatch(/\/book\/01-chapter\/\d{2}-child\.md/);
+      expect(promoted?.newFilePath).not.toBe('/book/01-chapter/03-child.md');
+      expect(promoted?.newFilePath).toMatch(/\/book\/01-chapter\/\d{2}-child\.md/);
     });
   });
   
@@ -424,8 +424,8 @@ describe('Movement Operations', () => {
       const movedSection = updates.find(u => u.id === 's2-b');
       const swappedSection = updates.find(u => u.id === 's2-a');
       
-      expect(movedSection?.filePath).toMatch(/\/01-section-b\.md$/);
-      expect(swappedSection?.filePath).toMatch(/\/02-section-a\.md$/);
+      expect(movedSection?.newFilePath).toMatch(/\/01-section-b\.md$/);
+      expect(swappedSection?.newFilePath).toMatch(/\/02-section-a\.md$/);
     });
     
     test('filePath is always recalculated on move', () => {
@@ -439,8 +439,8 @@ describe('Movement Operations', () => {
       
       expect(updates).toHaveLength(2);
       updates.forEach(update => {
-        expect(update.filePath).toBeDefined();
-        expect(update.filePath).not.toBe('');
+        expect(update.newFilePath).toBeDefined();
+        expect(update.newFilePath).not.toBe('');
       });
     });
   });

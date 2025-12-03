@@ -13,7 +13,8 @@ export type SectionUpdate = {
   level: 1 | 2 | 3 | 4;
   order: number;
   parentId?: string;
-  filePath: string;
+  oldFilePath: string;
+  newFilePath: string;
 }
 
 /**
@@ -159,7 +160,8 @@ function swapSiblings(section1: Section, section2: Section, sections: Section[])
     level: section1.level,
     order: section2.order,
     parentId: section1.parentId,
-    filePath: calculateFilePath(section1.filePath, section2.order)
+    oldFilePath: section1.filePath,
+    newFilePath: calculateFilePath(section1.filePath, section2.order)
   });
 
   updates.push({
@@ -167,7 +169,8 @@ function swapSiblings(section1: Section, section2: Section, sections: Section[])
     level: section2.level,
     order: section1.order,
     parentId: section2.parentId,
-    filePath: calculateFilePath(section2.filePath, section1.order)
+    oldFilePath: section2.filePath,
+    newFilePath: calculateFilePath(section2.filePath, section1.order)
   });
 
   return updates;
@@ -200,7 +203,8 @@ function promoteLevel(section: Section, sections: Section[]): SectionUpdate[] {
     level: newLevel,
     order: newOrder,
     parentId: newParentId,
-    filePath: calculateFilePath(section.filePath, newOrder)
+    oldFilePath: section.filePath,
+    newFilePath: calculateFilePath(section.filePath, newOrder)
   });
 
   // Renumber subsequent siblings of grandparent
@@ -213,7 +217,8 @@ function promoteLevel(section: Section, sections: Section[]): SectionUpdate[] {
         level: sibling.level,
         order: sibling.order + 1,
         parentId: sibling.parentId,
-        filePath: calculateFilePath(sibling.filePath, sibling.order + 1)
+        oldFilePath: sibling.filePath,
+        newFilePath: calculateFilePath(sibling.filePath, sibling.order + 1)
       });
     });
 
@@ -269,7 +274,8 @@ function demoteLevel(section: Section, sections: Section[]): SectionUpdate[] {
     level: newLevel,
     order: newOrder,
     parentId: newParent.id,
-    filePath: calculateFilePath(section.filePath, newOrder)
+    oldFilePath: section.filePath,
+    newFilePath: calculateFilePath(section.filePath, newOrder)
   });
 
   return updates;
