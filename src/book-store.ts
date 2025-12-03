@@ -2,7 +2,7 @@
 import { createStore, produce } from 'solid-js/store';
 import type { Book, Section } from './types';
 import type { SectionUpdate } from './movement-operations';
-import { createBookStorage, type BookStorage } from './storage';
+import { createBookStorage } from './storage';
 
 /**
  * Create a reactive SolidJS store for book management

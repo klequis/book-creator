@@ -1,9 +1,12 @@
-import { Component, Show, createSignal, onMount, createEffect, onCleanup } from 'solid-js';
+import { Component, Show, createSignal, onMount, createEffect, onCleanup, For } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { invoke } from '@tauri-apps/api/core';
 import MarkdownIt from 'markdown-it';
 import { markdownKeywordPlugin } from '../utils/markdownKeywordPlugin';
+import { markdownToAST } from '../utils/markdownParser';
 import { load } from '@tauri-apps/plugin-store';
+import { ASTNodeRenderer } from './ast/ASTNodeRenderer';
+import type { RootNode } from '../types/ast';
 import './MarkdownPreview.css';
 
 const md = new MarkdownIt({
@@ -23,10 +26,14 @@ interface MarkdownPreviewProps {
 
 export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
   const [zoom, setZoom] = createSignal(180);
-  const [previewState, setPreviewState] = createStore({
-    html: '',
+  const [previewState, setPreviewState] = createStore<{
+    ast: RootNode | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    ast: null,
     loading: false,
-    error: null as string | null
+    error: null
   });
   
   let store: Awaited<ReturnType<typeof load>> | null = null;
@@ -91,7 +98,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
     const filePath = props.filePath;
 
     if (!markdown || !filePath) {
-      setPreviewState({ html: '', loading: false, error: null });
+      setPreviewState({ ast: null, loading: false, error: null });
       return;
     }
 
@@ -157,17 +164,18 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
           }
         }
         
-        const html = md.render(processedMarkdown);
-        setPreviewState({ html, loading: false, error: null });
+        // Parse markdown to AST
+        const ast = markdownToAST(md, processedMarkdown);
+        setPreviewState({ ast, loading: false, error: null });
       } catch (error) {
         console.error('Failed to render markdown:', error);
         setPreviewState({
-          html: '',
+          ast: null,
           loading: false,
           error: error instanceof Error ? error.message : 'Unknown error'
         });
       }
-    }, 150);
+    }, 300);
   });
   
   return (
@@ -198,7 +206,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
             <p>{previewState.error}</p>
           </div>
         </Show>
-        <Show when={!previewState.loading && !previewState.error}>
+        <Show when={!previewState.loading && !previewState.error && previewState.ast}>
           <div class="preview-header">
             <div class="preview-file-path">{shortenPath(props.filePath!)}</div>
             <div class="zoom-controls">
@@ -207,7 +215,11 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
               <button onClick={zoomIn} title="Zoom in">+</button>
             </div>
           </div>
-          <div class="preview-content" style={{ "font-size": `${zoom()}%` }} innerHTML={previewState.html}></div>
+          <div class="preview-content" style={{ "font-size": `${zoom()}%` }}>
+            <For each={previewState.ast!.children}>
+              {(node) => <ASTNodeRenderer node={node} />}
+            </For>
+          </div>
         </Show>
       </Show>
     </div>

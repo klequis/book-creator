@@ -29,6 +29,7 @@
     "codemirror": "^6.0.2",
     "lucide-solid": "^0.555.0",
     "markdown-it": "^14.1.0",
+    "markdown-it-ast": "^0.0.1",
     "solid-js": "^1.9.3",
     "solid-markdown": "^2.1.1",
     "unstorage": "^1.17.3"
