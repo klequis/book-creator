@@ -1,6 +1,8 @@
 import { Component, For, Show } from 'solid-js';
+import { File } from 'lucide-solid';
 import type { Section } from '../types';
 import { useBookContext } from '../contexts/BookContext';
+import './CollapsibleContainer.css';
 
 interface SectionNodeProps {
   section: Section;
@@ -31,11 +33,12 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
   };
 
   return (
-    <div class="section-node" style={{ 'margin-left': indent() }}>
+    <div class="section-node">
       <div 
-        class="section-header clickable"
+        class="section-header"
         onClick={() => props.onFileSelect(fullPath())}
       >
+        <File size={14} />
         <span class="section-level">S{props.section.level}</span>
         <span class="section-order">({props.section.order})</span>
         <span class="section-name">{fileName()}</span>

@@ -27,6 +27,7 @@
     "@tauri-apps/plugin-store": "^2.4.1",
     "@types/markdown-it": "^14.1.2",
     "codemirror": "^6.0.2",
+    "lucide-solid": "^0.555.0",
     "markdown-it": "^14.1.0",
     "solid-js": "^1.9.3",
     "solid-markdown": "^2.1.1",

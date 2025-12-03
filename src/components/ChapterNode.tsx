@@ -1,6 +1,9 @@
 import { Component, For } from 'solid-js';
+import { FileText } from 'lucide-solid';
 import type { Chapter } from '../types';
 import { SectionNode } from './SectionNode';
+import { CollapsibleContainer } from './CollapsibleContainer';
+import './CollapsibleContainer.css';
 
 interface ChapterNodeProps {
   chapter: Chapter;
@@ -8,30 +11,31 @@ interface ChapterNodeProps {
 }
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
-  // Chapter's first section is the S1 heading
-  const chapterSection = () => props.chapter.sections[0];
+  const chapterTitle = () => {
+    // Get the first section's filename as the chapter title
+    const firstSection = props.chapter.sections[0];
+    if (firstSection) {
+      const parts = firstSection.filePath.split('/');
+      return parts[parts.length - 1].replace('.md', '');
+    }
+    return 'Chapter';
+  };
 
   return (
-    <div class="chapter-node">
-      <div 
-        class="chapter-header clickable"
-        onClick={() => props.onFileSelect(chapterSection()?.filePath ?? null)}
-      >
-        <span class="chapter-title">Chapter</span>
-      </div>
-      
-      {/* All sections in this chapter */}
-      <div class="chapter-sections">
-        <For each={props.chapter.sections}>
-          {(section) => (
-            <SectionNode 
-              section={section} 
-              allSections={props.chapter.sections}
-              onFileSelect={props.onFileSelect} 
-            />
-          )}
-        </For>
-      </div>
-    </div>
+    <CollapsibleContainer
+      icon={<FileText size={16} />}
+      label={chapterTitle()}
+      defaultExpanded={true}
+    >
+      <For each={props.chapter.sections}>
+        {(section) => (
+          <SectionNode 
+            section={section} 
+            allSections={props.chapter.sections}
+            onFileSelect={props.onFileSelect} 
+          />
+        )}
+      </For>
+    </CollapsibleContainer>
   );
 };
