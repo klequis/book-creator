@@ -3,6 +3,7 @@
  */
 
 import { createSignal } from 'solid-js';
+import { showError } from '../utils/notifications';
 
 const [currentFilePath, setCurrentFilePath] = createSignal<string | null>(null);
 const [hasUnsavedChanges, setHasUnsavedChanges] = createSignal(false);
@@ -40,6 +41,11 @@ export const editorState = {
       return true;
     } catch (error) {
       console.error('[EditorState] Failed to save:', error);
+      showError(
+        `Failed to save current file: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined,
+        `Saving file: ${currentFilePath()}`
+      );
       return false;
     }
   }

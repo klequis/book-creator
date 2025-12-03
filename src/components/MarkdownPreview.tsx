@@ -5,6 +5,7 @@ import MarkdownIt from 'markdown-it';
 import { markdownKeywordPlugin } from '../utils/markdownKeywordPlugin';
 import { markdownToAST } from '../utils/markdownParser';
 import { load } from '@tauri-apps/plugin-store';
+import { showError } from '../utils/notifications';
 import { ASTNodeRenderer } from './ast/ASTNodeRenderer';
 import type { RootNode } from '../types/ast';
 import './MarkdownPreview.css';
@@ -160,6 +161,11 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
               processedMarkdown = processedMarkdown.replace(fullMatch, `![${alt}](${dataUrl})`);
             } catch (error) {
               console.error(`Failed to load image ${fullPath}:`, error);
+              showError(
+                `Failed to load image: ${imageSrc}`,
+                error instanceof Error ? error : undefined,
+                `Rendering preview for: ${props.filePath}`
+              );
             }
           }
         }
@@ -169,10 +175,16 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
         setPreviewState({ ast, loading: false, error: null });
       } catch (error) {
         console.error('Failed to render markdown:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        showError(
+          `Failed to render markdown preview: ${errorMessage}`,
+          error instanceof Error ? error : undefined,
+          `Rendering preview for: ${props.filePath}`
+        );
         setPreviewState({
           ast: null,
           loading: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: errorMessage
         });
       }
     }, 300);

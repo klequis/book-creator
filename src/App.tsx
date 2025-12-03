@@ -1,9 +1,11 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 import Resizable from '@corvu/resizable';
 import { TreeView } from "./components/TreeView";
 import { MarkdownPreview } from "./components/MarkdownPreview";
 import { MarkdownEditor } from "./components/MarkdownEditor";
 import { NotificationContainer } from "./components/NotificationContainer";
+import { ErrorPanel } from "./components/ErrorPanel";
+import { getIsErrorPanelOpen } from "./stores/errorStore";
 import { restoreWindowState, setupWindowStateListeners } from "./utils/windowManager";
 import "./App.css";
 
@@ -13,8 +15,11 @@ function App() {
   const [resourcesPath, setResourcesPath] = createSignal<string | null>(null);
   const [editorContent, setEditorContent] = createSignal<string | null>(null);
   
-  // Persistent panel sizes (sidebar 20%, editor 40%, preview 40%)
-  const [panelSizes, setPanelSizes] = createSignal<number[]>([0.2, 0.4, 0.4]);
+  const isErrorPanelOpen = getIsErrorPanelOpen;
+  
+  // Persistent panel sizes - now 4 panels when error panel is open
+  // [sidebar, editor, preview, errorPanel]
+  const [panelSizes, setPanelSizes] = createSignal<number[]>([0.2, 0.35, 0.35, 0.1]);
 
   onMount(() => {
     restoreWindowState();
@@ -25,7 +30,7 @@ function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 3) {
+        if (Array.isArray(parsed) && parsed.length === 4) {
           setPanelSizes(parsed);
         }
       } catch (e) {
@@ -88,6 +93,19 @@ function App() {
             content={editorContent()} 
           />
         </Resizable.Panel>
+        
+        <Show when={isErrorPanelOpen()}>
+          <Resizable.Handle class="resize-handle" aria-label="Resize preview" />
+          
+          <Resizable.Panel 
+            initialSize={panelSizes()[3]} 
+            minSize={0.1}
+            maxSize={0.5}
+            class="error-panel-container"
+          >
+            <ErrorPanel />
+          </Resizable.Panel>
+        </Show>
       </Resizable>
     </div>
   );

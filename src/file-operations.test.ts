@@ -5,16 +5,19 @@ import type { SectionUpdate } from './movement-operations';
 jest.mock('@tauri-apps/plugin-fs', () => ({
   rename: jest.fn(),
   readTextFile: jest.fn(),
-  writeTextFile: jest.fn()
+  writeTextFile: jest.fn(),
+  exists: jest.fn()
 }));
 
-import { rename, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import { rename, readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
 import { applyFileSystemChanges, validateFilesExist } from './file-operations';
 
 describe('File Operations', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
+    // By default, assume files exist (tests can override this)
+    (exists as jest.Mock).mockResolvedValue(true);
   });
 
   describe('applyFileSystemChanges', () => {
@@ -204,6 +207,27 @@ describe('File Operations', () => {
 
       await expect(applyFileSystemChanges(updates, allSections))
         .rejects.toThrow('No heading found');
+    });
+
+    test('throws error when file does not exist', async () => {
+      const updates: SectionUpdate[] = [{
+        id: 'section-1',
+        level: 2,
+        order: 1,
+        parentId: 's1-id',
+        oldFilePath: '/book/chapter/missing.md',
+        newFilePath: '/book/chapter/01-section.md'
+      }];
+
+      const allSections = [
+        { id: 's1-id', order: 1, parentId: undefined },
+        { id: 'section-1', order: 1, parentId: 's1-id' }
+      ];
+
+      (exists as jest.Mock).mockResolvedValue(false);
+
+      await expect(applyFileSystemChanges(updates, allSections))
+        .rejects.toThrow('File does not exist');
     });
   });
 

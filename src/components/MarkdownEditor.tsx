@@ -7,6 +7,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { editorState } from '../stores/editorState';
+import { showError } from '../utils/notifications';
 import './MarkdownEditor.css';
 
 interface MarkdownEditorProps {
@@ -86,6 +87,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
         return markdown;
       } catch (error) {
         console.error('Failed to load file:', error);
+        // Error will be handled by createEffect watching fileContent.error
         throw error;
       }
     }
@@ -149,6 +151,20 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
     console.log('Editor initialized');
   };
 
+  // Watch for resource loading errors
+  createEffect(() => {
+    const error = fileContent.error;
+    console.log('[MarkdownEditor] fileContent.error:', error);
+    if (error) {
+      console.log('[MarkdownEditor] Showing error in panel:', error);
+      showError(
+        `Failed to load file: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined,
+        `Loading file: ${props.filePath}`
+      );
+    }
+  });
+
   createEffect(() => {
     // Initialize editor when file loads
     const initialContent = fileContent();
@@ -199,7 +215,11 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       props.onFileSaved?.();
     } catch (error) {
       console.error('Failed to save file:', error);
-      alert(`Failed to save: ${error}`);
+      showError(
+        `Failed to save file: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined,
+        `Saving file: ${props.filePath}`
+      );
     } finally {
       setIsSaving(false);
     }

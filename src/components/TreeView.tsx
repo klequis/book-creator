@@ -130,7 +130,11 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       
       const saved = await editorState.saveCurrentFile();
       if (!saved) {
-        showError('Failed to save current file. Please save manually before switching books.');
+        showError(
+          'Failed to save current file. Please save manually before switching books.',
+          undefined,
+          `Switching to book: ${path}`
+        );
         return;
       }
     }

@@ -1,5 +1,5 @@
 // Filesystem operations using Tauri
-import { rename, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import { rename, readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
 import type { SectionUpdate } from './movement-operations';
 
 /**
@@ -65,8 +65,9 @@ async function updateHeadingInFile(
 
 /**
  * Apply filesystem changes for section updates
- * 1. Renames files
- * 2. Updates headings in files
+ * 1. Validates all files exist
+ * 2. Renames files
+ * 3. Updates headings in files
  */
 export async function applyFileSystemChanges(
   updates: SectionUpdate[],
@@ -76,6 +77,14 @@ export async function applyFileSystemChanges(
   const processedFiles = new Set<string>();
   
   try {
+    // First, validate all files exist
+    for (const update of updates) {
+      const fileExists = await exists(update.oldFilePath);
+      if (!fileExists) {
+        throw new Error(`File does not exist: ${update.oldFilePath}. The file may have been moved or deleted outside the application.`);
+      }
+    }
+    
     // Process updates in order
     for (const update of updates) {
       // Skip if already processed (shouldn't happen, but safety check)
@@ -85,12 +94,21 @@ export async function applyFileSystemChanges(
       
       // 1. Rename file if path changed
       if (update.oldFilePath !== update.newFilePath) {
-        await rename(update.oldFilePath, update.newFilePath);
+        try {
+          await rename(update.oldFilePath, update.newFilePath);
+        } catch (error) {
+          throw new Error(`Failed to rename ${update.oldFilePath} to ${update.newFilePath}: ${error}`);
+        }
       }
       
-      // 2. Update heading in file
-      const headingPrefix = calculateHeadingPrefix(update, allSections);
-      await updateHeadingInFile(update.newFilePath, update.level, headingPrefix);
+      // 2. Update heading in file (use new path after rename)
+      const targetPath = update.newFilePath;
+      try {
+        const headingPrefix = calculateHeadingPrefix(update, allSections);
+        await updateHeadingInFile(targetPath, update.level, headingPrefix);
+      } catch (error) {
+        throw new Error(`Failed to update heading in ${targetPath}: ${error}`);
+      }
       
       processedFiles.add(update.oldFilePath);
     }

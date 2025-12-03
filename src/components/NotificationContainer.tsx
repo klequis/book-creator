@@ -15,7 +15,6 @@ export const NotificationContainer: Component = () => {
           >
             <span class="notification-icon">
               <Show when={notification.type === 'success'}>✓</Show>
-              <Show when={notification.type === 'error'}>✕</Show>
               <Show when={notification.type === 'info'}>ℹ</Show>
             </span>
             <span class="notification-message">{notification.message}</span>

@@ -98,7 +98,11 @@ export const bookStoreActions = {
       console.error('[BookStore] Error loading book:', error);
       setBookStore('loading', false);
       setBookStore('error', error instanceof Error ? error.message : String(error));
-      showError(`Failed to load book: ${error instanceof Error ? error.message : String(error)}`);
+      showError(
+        `Failed to load book: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined,
+        `Loading book from: ${rootPath}`
+      );
     }
   },
 
@@ -107,7 +111,7 @@ export const bookStoreActions = {
    */
   async saveBook() {
     if (!bookStore.rootPath || !bookStore.book) {
-      showError('No book loaded');
+      showError('No book loaded', undefined, 'Attempting to save book');
       return false;
     }
 
@@ -119,7 +123,11 @@ export const bookStoreActions = {
       return true;
     } catch (error) {
       console.error('[BookStore] Error saving book:', error);
-      showError(`Failed to save book: ${error instanceof Error ? error.message : String(error)}`);
+      showError(
+        `Failed to save book: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined,
+        `Saving book to: ${bookStore.rootPath}`
+      );
       return false;
     }
   },
@@ -211,7 +219,11 @@ export const bookStoreActions = {
       
     } catch (error) {
       console.error('[BookStore] Error applying section updates:', error);
-      showError(`Failed to apply changes: ${error instanceof Error ? error.message : String(error)}`);
+      showError(
+        `Failed to apply changes: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined,
+        'Applying section movement updates'
+      );
       throw error;
     }
   },

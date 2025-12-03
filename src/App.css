@@ -32,7 +32,8 @@ html, body, #root {
 /* Resizable panels */
 .sidebar-panel,
 .editor-panel,
-.preview-panel {
+.preview-panel,
+.error-panel-container {
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -45,6 +46,10 @@ html, body, #root {
 
 .editor-panel {
   border-right: 1px solid #2d2d2d;
+}
+
+.error-panel-container {
+  border-left: 1px solid #2d2d2d;
 }
 
 /* Resize handles */

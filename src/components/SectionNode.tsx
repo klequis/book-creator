@@ -43,7 +43,11 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
       await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Moved section up');
     } catch (error) {
-      showError(error instanceof Error ? error.message : 'Failed to move section');
+      showError(
+        error instanceof Error ? error.message : 'Failed to move section',
+        error instanceof Error ? error : undefined,
+        `Moving section up: ${fileName()}`
+      );
     }
   };
 
@@ -54,7 +58,11 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
       await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Moved section down');
     } catch (error) {
-      showError(error instanceof Error ? error.message : 'Failed to move section');
+      showError(
+        error instanceof Error ? error.message : 'Failed to move section',
+        error instanceof Error ? error : undefined,
+        `Moving section down: ${fileName()}`
+      );
     }
   };
 
@@ -65,7 +73,11 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
       await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Promoted section');
     } catch (error) {
-      showError(error instanceof Error ? error.message : 'Failed to promote section');
+      showError(
+        error instanceof Error ? error.message : 'Failed to promote section',
+        error instanceof Error ? error : undefined,
+        `Promoting section: ${fileName()}`
+      );
     }
   };
 
@@ -76,7 +88,11 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
       await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Demoted section');
     } catch (error) {
-      showError(error instanceof Error ? error.message : 'Failed to demote section');
+      showError(
+        error instanceof Error ? error.message : 'Failed to demote section',
+        error instanceof Error ? error : undefined,
+        `Demoting section: ${fileName()}`
+      );
     }
   };
 

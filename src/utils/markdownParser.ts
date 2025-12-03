@@ -190,9 +190,6 @@ function parseListItem(tokens: any[], startIndex: number): { node: any; nextInde
 function parseInlineContent(token: any): ASTNode[] {
   if (!token || !token.children) return [];
   
-  console.log('[parseInlineContent] Token content:', token.content);
-  console.log('[parseInlineContent] Children:', token.children?.map((c: any) => ({ type: c.type, content: c.content })));
-  
   const nodes: ASTNode[] = [];
   const processedIndices = new Set<number>();
   
@@ -290,14 +287,12 @@ function parseInlineContent(token: any): ASTNode[] {
  * Parse text content and extract keywords
  */
 function parseTextWithKeywords(text: string): ASTNode[] {
-  console.log('[parseTextWithKeywords] Input text:', text);
   const nodes: ASTNode[] = [];
   const regex = /#(\w+)/g;
   let lastIndex = 0;
   let match;
   
   while ((match = regex.exec(text)) !== null) {
-    console.log('[parseTextWithKeywords] Found keyword:', match[1], 'at index:', match.index);
     // Add text before keyword
     if (match.index > lastIndex) {
       nodes.push({ type: 'text', value: text.substring(lastIndex, match.index) });
@@ -317,6 +312,5 @@ function parseTextWithKeywords(text: string): ASTNode[] {
     nodes.push({ type: 'text', value: text });
   }
   
-  console.log('[parseTextWithKeywords] Output nodes:', nodes.length, 'nodes');
   return nodes;
 }
