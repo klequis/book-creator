@@ -4,6 +4,7 @@ import { load } from '@tauri-apps/plugin-store';
 import { bookStore, bookStoreActions } from '../stores/bookStore';
 import { editorState } from '../stores/editorState';
 import { Book } from './Book';
+import { BookProvider } from '../contexts/BookContext';
 import { RecentBooksList } from './RecentBooksList';
 import { showError, showInfo } from '../utils/notifications';
 import './TreeView.css';
@@ -210,10 +211,12 @@ export const TreeView: Component<TreeViewProps> = (props) => {
 
       <div class="tree-content-wrapper" style={{ "font-size": `${zoom()}%` }}>
         <Show when={bookStore.book && !bookStore.loading}>
-          <Book 
-            book={bookStore.book!} 
-            onFileSelect={props.onFileSelect} 
-          />
+          <BookProvider rootPath={() => bookStore.rootPath}>
+            <Book 
+              book={bookStore.book!} 
+              onFileSelect={props.onFileSelect} 
+            />
+          </BookProvider>
         </Show>
 
         <Show when={!bookStore.loading && !bookStore.book && !bookStore.error}>
