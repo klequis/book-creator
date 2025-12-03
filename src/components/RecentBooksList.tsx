@@ -1,5 +1,5 @@
 import { Component, createSignal, Show, For } from 'solid-js';
-import { bookStore } from '../stores/bookStore';
+import { bookStore } from '../stores/newBookStore';
 import './RecentBooksList.css';
 
 interface RecentBooksListProps {
