@@ -2,6 +2,7 @@
 
 import { createBookStore } from './book-store';
 import { orderPlus, orderMinus, levelPlus, levelMinus } from './movement-operations';
+import { applyFileSystemChanges, validateFilesExist } from './file-operations';
 
 // Create store pointing to book directory
 const bookStore = createBookStore('/path/to/book-project');
@@ -24,16 +25,23 @@ async function handleMoveUp(sectionId: string, chapterId: string) {
     // Calculate updates
     const updates = orderPlus(sectionId, chapter.sections);
 
+    // Validate files exist before making changes
+    const filesValid = await validateFilesExist(updates);
+    if (!filesValid) {
+      throw new Error('Some files do not exist');
+    }
+
+    // Apply filesystem changes (rename files, update headings)
+    await applyFileSystemChanges(updates, chapter.sections);
+
     // Apply to store (updates UI immediately)
     bookStore.applyUpdates(updates, chapterId, 'chapter');
 
-    // TODO: Also need to rename physical files here
-    // await renameFiles(updates);
-
-    // Save to disk
+    // Save JSON to disk
     await bookStore.save();
   } catch (error) {
     console.error('Failed to move section:', error);
+    // TODO: Show error to user, possibly rollback
   }
 }
 
