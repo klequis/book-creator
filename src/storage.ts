@@ -12,16 +12,24 @@ function tauriDriver(basePath: string) {
     options: { basePath },
     async hasItem(key: string) {
       try {
-        return await exists(`${basePath}/${key}`);
-      } catch {
+        const fullPath = `${basePath}/${key}`;
+        console.log('[tauriDriver] hasItem checking:', fullPath);
+        const result = await exists(fullPath);
+        console.log('[tauriDriver] hasItem result:', result);
+        return result;
+      } catch (error) {
+        console.error('[tauriDriver] hasItem error:', error);
         return false;
       }
     },
     async getItem(key: string) {
       try {
-        const content = await readTextFile(`${basePath}/${key}`);
+        const fullPath = `${basePath}/${key}`;
+        console.log('[tauriDriver] getItem reading:', fullPath);
+        const content = await readTextFile(fullPath);
         return JSON.parse(content);
-      } catch {
+      } catch (error) {
+        console.error('[tauriDriver] getItem error:', error);
         return null;
       }
     },

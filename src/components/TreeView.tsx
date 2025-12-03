@@ -74,7 +74,9 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   // Watch for bookPath changes and load book
   createEffect(async () => {
     const path = bookPath();
+    console.log('[TreeView] createEffect triggered, path:', path, 'bookStore.rootPath:', bookStore.rootPath);
     if (path && path !== bookStore.rootPath) {
+      console.log('[TreeView] Calling loadBook with:', path);
       await bookStoreActions.loadBook(path);
       
       // Save the path
@@ -110,7 +112,9 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       console.log('Selected:', selected);
       
       if (selected && typeof selected === 'string') {
+        console.log('[TreeView] Setting bookPath to:', selected);
         setBookPath(selected);
+        console.log('[TreeView] bookPath is now:', bookPath());
       }
     } catch (err) {
       console.error('Folder picker error:', err);
