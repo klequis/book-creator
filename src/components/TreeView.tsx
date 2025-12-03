@@ -1,7 +1,7 @@
 import { Component, createSignal, Show, createEffect, onMount } from 'solid-js';
 import { open } from '@tauri-apps/plugin-dialog';
 import { load } from '@tauri-apps/plugin-store';
-import { bookStore, bookStoreActions } from '../stores/bookStore';
+import { bookStore, loadBook, closeBook } from '../stores/bookStore';
 import { editorState } from '../stores/editorState';
 import { Book } from './Book';
 import { RecentBooksList } from './RecentBooksList';
@@ -57,7 +57,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       if (savedPath) {
         console.log('Restored book path:', savedPath);
         setBookPath(savedPath);
-        await bookStoreActions.loadBook(savedPath);
+        await loadBook(savedPath);
       }
       const savedZoom = await store.get<number>('treeZoom');
       if (savedZoom) {
@@ -75,7 +75,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   createEffect(async () => {
     const path = bookPath();
     if (path && path !== bookStore.rootPath) {
-      await bookStoreActions.loadBook(path);
+      await loadBook(path);
       
       // Save the path
       try {
@@ -93,7 +93,9 @@ export const TreeView: Component<TreeViewProps> = (props) => {
 
   // Notify parent of resources path changes
   createEffect(() => {
-    props.onResourcesPathChange(bookStore.resourcesPath);
+    // TODO: Add resourcesPath to new book structure or derive from rootPath
+    const resourcesPath = bookStore.rootPath ? `${bookStore.rootPath}/resources` : null;
+    props.onResourcesPathChange(resourcesPath);
   });
 
   const selectFolder = async () => {
@@ -129,8 +131,34 @@ export const TreeView: Component<TreeViewProps> = (props) => {
     }
     
     // Close current book and open new one
-    bookStoreActions.closeBook();
+    closeBook();
     setBookPath(path);
+  };
+
+  // Helper to count sections in book
+  const countSections = () => {
+    if (!bookStore.book) return 0;
+    
+    let count = 0;
+    if (bookStore.book.introduction) {
+      count += bookStore.book.introduction.sections.length;
+    }
+    if (bookStore.book.parts) {
+      bookStore.book.parts.forEach(part => {
+        count += part.sections.length;
+        part.chapters.forEach(chapter => {
+          count += chapter.sections.length;
+        });
+      });
+    }
+    bookStore.book.chapters.forEach(chapter => {
+      count += chapter.sections.length;
+    });
+    bookStore.book.appendices.forEach(appendix => {
+      count += appendix.sections.length;
+    });
+    
+    return count;
   };
 
   return (
@@ -161,30 +189,30 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       {/* Debug display */}
       <div style="padding: 12px; color: #858585; font-size: 11px;">
         {(() => {
-          const hasContent = bookStore.chapters.length > 0 || bookStore.sections.length > 0;
+          const hasContent = bookStore.book !== null;
           return `Structure loaded: ${hasContent ? 'YES' : 'NO'}`;
         })()}
-        <Show when={bookStore.rootPath}>
+        <Show when={bookStore.book}>
           <div>
-            Book Parts: {bookStore.bookParts.length} | 
-            Chapters: {bookStore.chapters.length} | 
-            Sections: {bookStore.sections.length}
+            Parts: {bookStore.book!.parts?.length ?? 0} | 
+            Chapters: {bookStore.book!.chapters.length} | 
+            Appendices: {bookStore.book!.appendices.length} |
+            Sections: {countSections()}
             <br />
-            Introduction: {bookStore.chapters.filter(ch => ch.isIntroduction).length > 0 ? 'YES' : 'NO'} | 
-            Appendices: {bookStore.chapters.filter(ch => ch.isAppendix).length}
+            Introduction: {bookStore.book!.introduction ? 'YES' : 'NO'}
           </div>
         </Show>
       </div>
 
       <div class="tree-content-wrapper" style={{ "font-size": `${zoom()}%` }}>
-        <Show when={bookStore.rootPath && !bookStore.loading}>
+        <Show when={bookStore.book && !bookStore.loading}>
           <Book 
-            structure={bookStore} 
+            book={bookStore.book!} 
             onFileSelect={props.onFileSelect} 
           />
         </Show>
 
-        <Show when={!bookStore.loading && !bookStore.rootPath && !bookStore.error}>
+        <Show when={!bookStore.loading && !bookStore.book && !bookStore.error}>
           <div class="empty-state">
             <p>Click "Select Book Folder" to get started</p>
           </div>
