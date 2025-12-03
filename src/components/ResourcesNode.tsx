@@ -1,4 +1,5 @@
-import { Component, createSignal, Show, For, createResource } from 'solid-js';
+import { Component, createSignal, Show, For, createEffect } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { invoke } from '@tauri-apps/api/core';
 import './ResourcesNode.css';
 
@@ -15,31 +16,44 @@ interface FileEntry {
 
 export const ResourcesNode: Component<ResourcesNodeProps> = (props) => {
   const [isExpanded, setIsExpanded] = createSignal(true);
+  
+  const [entriesState, setEntriesState] = createStore<{
+    data: FileEntry[];
+    loading: boolean;
+    error: boolean;
+  }>({
+    data: [],
+    loading: false,
+    error: false
+  });
 
-  const [entries] = createResource(
-    () => props.folderPath,
-    async (path) => {
-      try {
-        const result: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
-          path
-        });
-        return result.map(entry => ({
-          name: entry.name,
-          path: `${path}/${entry.name}`,
-          is_dir: entry.is_dir
-        })).sort((a, b) => {
-          // Directories first, then files
-          if (a.is_dir === b.is_dir) {
-            return a.name.localeCompare(b.name);
-          }
-          return a.is_dir ? -1 : 1;
-        });
-      } catch (error) {
-        console.error('Failed to read resources directory:', error);
-        return [];
-      }
+  // Load entries when folderPath changes
+  createEffect(async () => {
+    const path = props.folderPath;
+    
+    setEntriesState({ loading: true, error: false });
+    
+    try {
+      const result: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
+        path
+      });
+      const sortedEntries = result.map(entry => ({
+        name: entry.name,
+        path: `${path}/${entry.name}`,
+        is_dir: entry.is_dir
+      })).sort((a, b) => {
+        // Directories first, then files
+        if (a.is_dir === b.is_dir) {
+          return a.name.localeCompare(b.name);
+        }
+        return a.is_dir ? -1 : 1;
+      });
+      setEntriesState({ data: sortedEntries, loading: false, error: false });
+    } catch (err) {
+      console.error('Failed to read resources directory:', err);
+      setEntriesState({ data: [], error: true, loading: false });
     }
-  );
+  });
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded());
@@ -54,14 +68,14 @@ export const ResourcesNode: Component<ResourcesNodeProps> = (props) => {
       </div>
       <Show when={isExpanded()}>
         <div class="resources-content">
-          <Show when={entries.loading}>
+          <Show when={entriesState.loading}>
             <div class="loading">Loading...</div>
           </Show>
-          <Show when={entries.error}>
+          <Show when={entriesState.error}>
             <div class="error">Failed to load resources</div>
           </Show>
-          <Show when={entries() && entries()!.length > 0}>
-            <For each={entries()}>
+          <Show when={entriesState.data.length > 0}>
+            <For each={entriesState.data}>
               {(entry) => (
                 <ResourceEntry 
                   entry={entry} 
@@ -70,7 +84,7 @@ export const ResourcesNode: Component<ResourcesNodeProps> = (props) => {
               )}
             </For>
           </Show>
-          <Show when={entries() && entries()!.length === 0}>
+          <Show when={!entriesState.loading && !entriesState.error && entriesState.data.length === 0}>
             <div class="empty">No resources</div>
           </Show>
         </div>
@@ -86,31 +100,42 @@ interface ResourceEntryProps {
 
 const ResourceEntry: Component<ResourceEntryProps> = (props) => {
   const [isExpanded, setIsExpanded] = createSignal(false);
+  
+  const [subEntriesState, setSubEntriesState] = createStore<{
+    data: FileEntry[];
+  }>({
+    data: []
+  });
 
-  const [subEntries] = createResource(
-    () => props.entry.is_dir && isExpanded() ? props.entry.path : null,
-    async (path) => {
-      if (!path) return [];
-      try {
-        const result: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
-          path
-        });
-        return result.map(entry => ({
-          name: entry.name,
-          path: `${path}/${entry.name}`,
-          is_dir: entry.is_dir
-        })).sort((a, b) => {
-          if (a.is_dir === b.is_dir) {
-            return a.name.localeCompare(b.name);
-          }
-          return a.is_dir ? -1 : 1;
-        });
-      } catch (error) {
-        console.error('Failed to read subdirectory:', error);
-        return [];
-      }
+  // Load subdirectories when expanded
+  createEffect(async () => {
+    const path = props.entry.is_dir && isExpanded() ? props.entry.path : null;
+    
+    if (!path) {
+      setSubEntriesState({ data: [] });
+      return;
     }
-  );
+    
+    try {
+      const result: Array<{ name: string; is_dir: boolean }> = await invoke('read_directory', {
+        path
+      });
+      const sortedEntries = result.map(entry => ({
+        name: entry.name,
+        path: `${path}/${entry.name}`,
+        is_dir: entry.is_dir
+      })).sort((a, b) => {
+        if (a.is_dir === b.is_dir) {
+          return a.name.localeCompare(b.name);
+        }
+        return a.is_dir ? -1 : 1;
+      });
+      setSubEntriesState({ data: sortedEntries });
+    } catch (error) {
+      console.error('Failed to read subdirectory:', error);
+      setSubEntriesState({ data: [] });
+    }
+  });
 
   const handleClick = () => {
     if (props.entry.is_dir) {
@@ -132,7 +157,7 @@ const ResourceEntry: Component<ResourceEntryProps> = (props) => {
       </div>
       <Show when={props.entry.is_dir && isExpanded()}>
         <div class="resource-children">
-          <For each={subEntries()}>
+          <For each={subEntriesState.data}>
             {(subEntry) => (
               <ResourceEntry 
                 entry={subEntry} 

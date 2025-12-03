@@ -1,14 +1,22 @@
-import { Component, createSignal, createResource, Show, onMount, onCleanup, createEffect, untrack } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
-import { load } from '@tauri-apps/plugin-store';
-import { EditorView, basicSetup } from 'codemirror';
-import { EditorState } from '@codemirror/state';
-import { markdown } from '@codemirror/lang-markdown';
-import { languages } from '@codemirror/language-data';
-import { oneDark } from '@codemirror/theme-one-dark';
-import { editorState } from '../stores/editorState';
-import { showError } from '../utils/notifications';
-import './MarkdownEditor.css';
+import {
+  Component,
+  createSignal,
+  Show,
+  onMount,
+  onCleanup,
+  createEffect,
+  untrack,
+} from "solid-js";
+import { invoke } from "@tauri-apps/api/core";
+import { load } from "@tauri-apps/plugin-store";
+import { EditorView, basicSetup } from "codemirror";
+import { EditorState } from "@codemirror/state";
+import { markdown } from "@codemirror/lang-markdown";
+import { languages } from "@codemirror/language-data";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { editorState } from "../stores/editorState";
+import { showError } from "../utils/notifications";
+import "./MarkdownEditor.css";
 
 interface MarkdownEditorProps {
   filePath: string | null;
@@ -18,11 +26,16 @@ interface MarkdownEditorProps {
 }
 
 export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
-  const [content, setContent] = createSignal('');
+  const [content, setContent] = createSignal("");
   const [isSaving, setIsSaving] = createSignal(false);
   const [lastSaved, setLastSaved] = createSignal<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = createSignal(false);
   const [zoom, setZoom] = createSignal(180);
+
+    const [fileContent, setFileContent] = createSignal<string | null>(null);
+  const [fileLoading, setFileLoading] = createSignal(false);
+  const [fileError, setFileError] = createSignal<Error | null>(null);
+
   let store: Awaited<ReturnType<typeof load>> | null = null;
   let saveTimeout: number | undefined;
   let editorView: EditorView | undefined;
@@ -31,15 +44,15 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
   // Load saved zoom level
   onMount(async () => {
     try {
-      store = await load('settings.json');
-      const savedZoom = await store.get<number>('editorZoom');
+      store = await load("settings.json");
+      const savedZoom = await store.get<number>("editorZoom");
       if (savedZoom) {
         setZoom(savedZoom);
       }
     } catch (err) {
-      console.error('Failed to load editor zoom:', err);
+      console.error("Failed to load editor zoom:", err);
     }
-    
+
     // Register save callback
     editorState.registerSaveCallback(saveFile);
   });
@@ -52,12 +65,12 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
   const saveZoom = async (newZoom: number) => {
     try {
       if (!store) {
-        store = await load('settings.json');
+        store = await load("settings.json");
       }
-      await store.set('editorZoom', newZoom);
+      await store.set("editorZoom", newZoom);
       await store.save();
     } catch (err) {
-      console.error('Failed to save editor zoom:', err);
+      console.error("Failed to save editor zoom:", err);
     }
   };
 
@@ -66,35 +79,58 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
     setZoom(newZoom);
     saveZoom(newZoom);
   };
-  
+
   const zoomOut = () => {
     const newZoom = Math.max(zoom() - 10, 50);
     setZoom(newZoom);
     saveZoom(newZoom);
   };
-  
+
   const resetZoom = () => {
     setZoom(180);
     saveZoom(180);
   };
 
-  const [fileContent] = createResource(
-    () => props.filePath,
-    async (path) => {
-      if (!path) return null;
-      try {
-        const markdown: string = await invoke('read_file', { path });
-        return markdown;
-      } catch (error) {
-        console.error('Failed to load file:', error);
-        // Error will be handled by createEffect watching fileContent.error
-        throw error;
-      }
-    }
-  );
+  // Load file content when filePath changes
+  createEffect(async () => {
+    const path = props.filePath;
 
-  const initializeEditor = (container: HTMLDivElement, initialContent: string) => {
-    console.log('Initializing editor, content length:', initialContent.length);
+    if (!path) {
+      setFileContent(null);
+      setFileLoading(false);
+      setFileError(null);
+      return;
+    }
+
+    setFileContent(null);
+    setFileLoading(true);
+    setFileError(null);
+
+    try {
+      const markdown: string = await invoke("read_file", { path });
+      setFileContent(markdown);
+      setFileLoading(false);
+      setFileError(null);
+    } catch (error) {
+      console.error("Failed to load file:", error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      setFileContent(null);
+      setFileLoading(false);
+      setFileError(err);
+
+      showError(
+        `Failed to load file: ${err.message}`,
+        err,
+        `Loading file: ${path}`
+      );
+    }
+  });
+
+  const initializeEditor = (
+    container: HTMLDivElement,
+    initialContent: string
+  ) => {
+    console.log("Initializing editor, content length:", initialContent.length);
     if (editorView) {
       editorView.destroy();
     }
@@ -111,10 +147,10 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
             setContent(newContent);
             setHasUnsavedChanges(true);
             editorState.setHasUnsavedChanges(true);
-            
+
             // Pass content to preview
             props.onContentChange?.(newContent);
-            
+
             // Auto-save after 1 second of no typing
             if (saveTimeout) {
               clearTimeout(saveTimeout);
@@ -126,56 +162,42 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
         }),
         EditorView.lineWrapping,
         EditorView.theme({
-          '&': {
+          "&": {
             fontSize: `${zoom()}%`,
-            height: '100%'
+            height: "100%",
           },
-          '.cm-scroller': {
+          ".cm-scroller": {
             fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
-            lineHeight: '1.6'
+            lineHeight: "1.6",
           },
-          '.cm-content': {
-            color: '#e8e8e8'
+          ".cm-content": {
+            color: "#e8e8e8",
           },
-          '.cm-heading': {
-            color: '#ff6b6b'
-          }
-        })
-      ]
+          ".cm-heading": {
+            color: "#ff6b6b",
+          },
+        }),
+      ],
     });
 
     editorView = new EditorView({
       state: startState,
-      parent: container
+      parent: container,
     });
-    console.log('Editor initialized');
+    console.log("Editor initialized");
   };
-
-  // Watch for resource loading errors
-  createEffect(() => {
-    const error = fileContent.error;
-    console.log('[MarkdownEditor] fileContent.error:', error);
-    if (error) {
-      console.log('[MarkdownEditor] Showing error in panel:', error);
-      showError(
-        `Failed to load file: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined,
-        `Loading file: ${props.filePath}`
-      );
-    }
-  });
 
   createEffect(() => {
     // Initialize editor when file loads
     const initialContent = fileContent();
-    
-    if (editorContainer && initialContent && !fileContent.loading) {
+
+    if (editorContainer && initialContent && !fileLoading()) {
       setContent(initialContent);
       setHasUnsavedChanges(false);
       editorState.setHasUnsavedChanges(false);
       editorState.setCurrentFilePath(props.filePath);
       initializeEditor(editorContainer, initialContent);
-      
+
       // Pass initial content to preview
       props.onContentChange?.(initialContent);
     }
@@ -202,21 +224,23 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
 
   const saveFile = async () => {
     if (!props.filePath) return;
-    
+
     setIsSaving(true);
     try {
-      await invoke('write_file', {
+      await invoke("write_file", {
         path: props.filePath,
-        contents: content()
+        contents: content(),
       });
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
       editorState.setHasUnsavedChanges(false);
       props.onFileSaved?.();
     } catch (error) {
-      console.error('Failed to save file:', error);
+      console.error("Failed to save file:", error);
       showError(
-        `Failed to save file: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to save file: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         error instanceof Error ? error : undefined,
         `Saving file: ${props.filePath}`
       );
@@ -226,21 +250,31 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   };
 
   const shortenPath = (path: string) => {
-    return path.replace(/^\/home\/[^/]+\//, '~/');
+    return path.replace(/^\/home\/[^/]+\//, "~/");
   };
 
   return (
     <div class="markdown-editor">
-      <Show 
+      <Show
         when={props.filePath}
         fallback={
           <div class="editor-placeholder">
             <div class="placeholder-content">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
@@ -249,16 +283,16 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
           </div>
         }
       >
-        <Show when={fileContent.loading}>
+        <Show when={fileLoading()}>
           <div class="editor-loading">Loading...</div>
         </Show>
-        <Show when={fileContent.error}>
+        <Show when={fileError()}>
           <div class="editor-error">
             <h3>Error loading file</h3>
-            <p>{fileContent.error instanceof Error ? fileContent.error.message : 'Unknown error'}</p>
+            <p>{fileError()!.message}</p>
           </div>
         </Show>
-        <Show when={!fileContent.loading && !fileContent.error}>
+        <Show when={!fileLoading() && !fileError()}>
           <div class="editor-header">
             <div class="editor-file-path">{shortenPath(props.filePath!)}</div>
             <div class="editor-controls">
@@ -270,20 +304,27 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
                   <span class="saved">Saved at {formatTime(lastSaved()!)}</span>
                 </Show>
               </div>
-              <button onClick={saveFile} disabled={isSaving() || !hasUnsavedChanges()} class="save-button">
+              <button
+                onClick={saveFile}
+                disabled={isSaving() || !hasUnsavedChanges()}
+                class="save-button"
+              >
                 Save
               </button>
               <div class="zoom-controls">
-                <button onClick={zoomOut} title="Zoom out">−</button>
-                <button onClick={resetZoom} title="Reset zoom">{zoom()}%</button>
-                <button onClick={zoomIn} title="Zoom in">+</button>
+                <button onClick={zoomOut} title="Zoom out">
+                  −
+                </button>
+                <button onClick={resetZoom} title="Reset zoom">
+                  {zoom()}%
+                </button>
+                <button onClick={zoomIn} title="Zoom in">
+                  +
+                </button>
               </div>
             </div>
           </div>
-          <div 
-            ref={editorContainer} 
-            class="editor-codemirror"
-          />
+          <div ref={editorContainer} class="editor-codemirror" />
         </Show>
       </Show>
     </div>
