@@ -1,7 +1,50 @@
-// Book structure storage using unstorage
+// Book structure storage using unstorage with Tauri filesystem adapter
 import { createStorage } from 'unstorage';
-import fsDriver from 'unstorage/drivers/fs';
+import { readTextFile, writeTextFile, exists, remove } from '@tauri-apps/plugin-fs';
 import type { Book } from './types';
+
+/**
+ * Create a custom unstorage driver using Tauri filesystem
+ */
+function tauriDriver(basePath: string) {
+  return {
+    name: 'tauri-fs',
+    options: { basePath },
+    async hasItem(key: string) {
+      try {
+        return await exists(`${basePath}/${key}`);
+      } catch {
+        return false;
+      }
+    },
+    async getItem(key: string) {
+      try {
+        const content = await readTextFile(`${basePath}/${key}`);
+        return JSON.parse(content);
+      } catch {
+        return null;
+      }
+    },
+    async setItem(key: string, value: any) {
+      const content = JSON.stringify(value, null, 2);
+      await writeTextFile(`${basePath}/${key}`, content);
+    },
+    async removeItem(key: string) {
+      try {
+        await remove(`${basePath}/${key}`);
+      } catch (error) {
+        console.error('Failed to remove item:', error);
+      }
+    },
+    async getKeys() {
+      // Not implemented for now
+      return [];
+    },
+    async clear() {
+      // Not implemented for now
+    }
+  };
+}
 
 /**
  * Create storage instance for book data
@@ -9,9 +52,7 @@ import type { Book } from './types';
  */
 export function createBookStorage(basePath: string) {
   const storage = createStorage({
-    driver: fsDriver({
-      base: basePath
-    })
+    driver: tauriDriver(basePath)
   });
 
   return {
