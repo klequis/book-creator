@@ -1,4 +1,5 @@
-import { Component, createResource, Show, createSignal, onMount } from 'solid-js';
+import { Component, Show, createSignal, onMount, createEffect, onCleanup } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { invoke } from '@tauri-apps/api/core';
 import MarkdownIt from 'markdown-it';
 import { markdownKeywordPlugin } from '../utils/markdownKeywordPlugin';
@@ -17,12 +18,19 @@ md.use(markdownKeywordPlugin);
 interface MarkdownPreviewProps {
   filePath: string | null;
   resourcesPath: string | null;
-  fileRevision?: number;
+  content: string | null;
 }
 
 export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
   const [zoom, setZoom] = createSignal(180);
+  const [previewState, setPreviewState] = createStore({
+    html: '',
+    loading: false,
+    error: null as string | null
+  });
+  
   let store: Awaited<ReturnType<typeof load>> | null = null;
+  let renderTimeout: number | undefined;
 
   // Load saved zoom level
   onMount(async () => {
@@ -34,6 +42,12 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
       }
     } catch (err) {
       console.error('Failed to load preview zoom:', err);
+    }
+  });
+
+  onCleanup(() => {
+    if (renderTimeout) {
+      clearTimeout(renderTimeout);
     }
   });
 
@@ -69,21 +83,33 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
   const shortenPath = (path: string) => {
     return path.replace(/^\/home\/[^/]+\//, '~/');
   };
-  
-  const [content] = createResource(
-    () => [props.filePath, props.resourcesPath, props.fileRevision] as const,
-    async ([path, resourcesPath, _revision]) => {
-      if (!path) return null;
+
+  // Debounced rendering effect
+  createEffect(() => {
+    const markdown = props.content;
+    const resourcesPath = props.resourcesPath;
+    const filePath = props.filePath;
+
+    if (!markdown || !filePath) {
+      setPreviewState({ html: '', loading: false, error: null });
+      return;
+    }
+
+    // Clear previous timeout
+    if (renderTimeout) {
+      clearTimeout(renderTimeout);
+    }
+
+    // Debounce rendering by 300ms (increased for less frequent updates)
+    renderTimeout = window.setTimeout(async () => {
       try {
-        let markdown: string = await invoke('read_file', { path });
+        let processedMarkdown = markdown;
         
         // Process images before converting markdown to HTML
         if (resourcesPath) {
-          // Find all markdown image references: ![alt](src)
           const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-          const matches = Array.from(markdown.matchAll(imgRegex));
+          const matches = Array.from(processedMarkdown.matchAll(imgRegex));
           
-          // Process each image
           for (const match of matches) {
             const [fullMatch, alt, src] = match;
             
@@ -92,12 +118,11 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
             
             let fullPath: string;
             
-            // Check if it's a relative path with ../ or ./
             if (src.includes('../') || src.includes('./')) {
               // Resolve relative to the markdown file's directory
-              const fileDir = path.substring(0, path.lastIndexOf('/'));
+              const fileDir = filePath.substring(0, filePath.lastIndexOf('/'));
               fullPath = `${fileDir}/${src}`;
-              // Normalize the path (remove .. and .)
+              // Normalize the path
               const parts = fullPath.split('/');
               const normalized: string[] = [];
               for (const part of parts) {
@@ -109,19 +134,11 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
               }
               fullPath = '/' + normalized.join('/');
             } else {
-              // Assume it's just a filename in the resources folder
               fullPath = `${resourcesPath}/${src}`;
             }
             
-            console.log(`Image resolution:`);
-            console.log(`  Original src: ${src}`);
-            console.log(`  Full path: ${fullPath}`);
-            
             try {
-              // Read the image file as base64
               const base64Data: string = await invoke('read_binary_file', { path: fullPath });
-              
-              // Determine MIME type from extension
               const ext = fullPath.split('.').pop()?.toLowerCase();
               const mimeTypes: { [key: string]: string } = {
                 'png': 'image/png',
@@ -132,27 +149,27 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
                 'webp': 'image/webp'
               };
               const mimeType = mimeTypes[ext || ''] || 'image/png';
-              
               const dataUrl = `data:${mimeType};base64,${base64Data}`;
-              console.log(`  Data URL created (${base64Data.length} bytes)`);
-              
-              // Replace the markdown image with the data URL
-              markdown = markdown.replace(fullMatch, `![${alt}](${dataUrl})`);
+              processedMarkdown = processedMarkdown.replace(fullMatch, `![${alt}](${dataUrl})`);
             } catch (error) {
               console.error(`Failed to load image ${fullPath}:`, error);
             }
           }
         }
         
-        const html = md.render(markdown);
-        return html;
+        const html = md.render(processedMarkdown);
+        setPreviewState({ html, loading: false, error: null });
       } catch (error) {
-        console.error('Failed to load file:', error);
-        throw error;
+        console.error('Failed to render markdown:', error);
+        setPreviewState({
+          html: '',
+          loading: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
-    }
-  );
-
+    }, 150);
+  });
+  
   return (
     <div class="markdown-preview">
       <Show 
@@ -172,16 +189,16 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
           </div>
         }
       >
-        <Show when={content.loading}>
-          <div class="preview-loading">Loading...</div>
+        <Show when={previewState.loading}>
+          <div class="preview-loading">Rendering...</div>
         </Show>
-        <Show when={content.error}>
+        <Show when={previewState.error}>
           <div class="preview-error">
-            <h3>Error loading file</h3>
-            <p>{content.error instanceof Error ? content.error.message : 'Unknown error'}</p>
+            <h3>Error rendering preview</h3>
+            <p>{previewState.error}</p>
           </div>
         </Show>
-        <Show when={content() && !content.loading && !content.error}>
+        <Show when={!previewState.loading && !previewState.error}>
           <div class="preview-header">
             <div class="preview-file-path">{shortenPath(props.filePath!)}</div>
             <div class="zoom-controls">
@@ -190,7 +207,7 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
               <button onClick={zoomIn} title="Zoom in">+</button>
             </div>
           </div>
-          <div class="preview-content" style={{ "font-size": `${zoom()}%` }} innerHTML={content() || ''}></div>
+          <div class="preview-content" style={{ "font-size": `${zoom()}%` }} innerHTML={previewState.html}></div>
         </Show>
       </Show>
     </div>

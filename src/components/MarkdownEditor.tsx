@@ -12,6 +12,7 @@ interface MarkdownEditorProps {
   filePath: string | null;
   resourcesPath: string | null;
   onFileSaved?: () => void;
+  onContentChange?: (content: string) => void;
 }
 
 export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
@@ -108,6 +109,9 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
             setHasUnsavedChanges(true);
             editorState.setHasUnsavedChanges(true);
             
+            // Pass content to preview
+            props.onContentChange?.(newContent);
+            
             // Auto-save after 1 second of no typing
             if (saveTimeout) {
               clearTimeout(saveTimeout);
@@ -154,6 +158,9 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       editorState.setHasUnsavedChanges(false);
       editorState.setCurrentFilePath(props.filePath);
       initializeEditor(editorContainer, initialContent);
+      
+      // Pass initial content to preview
+      props.onContentChange?.(initialContent);
     }
   });
 

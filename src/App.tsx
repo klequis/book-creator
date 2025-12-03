@@ -10,7 +10,7 @@ function App() {
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null);
   const [treeZoom, setTreeZoom] = createSignal(180);
   const [resourcesPath, setResourcesPath] = createSignal<string | null>(null);
-  const [fileRevision, setFileRevision] = createSignal(0);
+  const [editorContent, setEditorContent] = createSignal<string | null>(null);
 
   onMount(() => {
     restoreWindowState();
@@ -29,10 +29,18 @@ function App() {
         </div>
         <div class="main-content">
           <div class="editor-pane">
-            <MarkdownEditor filePath={selectedFile()} resourcesPath={resourcesPath()} onFileSaved={() => setFileRevision(rev => rev + 1)} />
+            <MarkdownEditor 
+              filePath={selectedFile()} 
+              resourcesPath={resourcesPath()} 
+              onContentChange={setEditorContent}
+            />
           </div>
           <div class="preview-pane">
-            <MarkdownPreview filePath={selectedFile()} resourcesPath={resourcesPath()} fileRevision={fileRevision()} />
+            <MarkdownPreview 
+              filePath={selectedFile()} 
+              resourcesPath={resourcesPath()} 
+              content={editorContent()} 
+            />
           </div>
         </div>
       </div>
