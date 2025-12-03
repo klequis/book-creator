@@ -87,6 +87,24 @@ function parseToken(tokens: any[], startIndex: number): { node: ASTNode; nextInd
     }
 
     case 'blockquote_open': {
+      // First, check if this is a callout by looking ahead at the first inline token
+      let calloutType: string | undefined;
+      let shouldRemoveCalloutMarker = false;
+      
+      // Look for the first inline token (should be in first paragraph)
+      if (tokens[startIndex + 1]?.type === 'paragraph_open' && tokens[startIndex + 2]) {
+        const firstInlineToken = tokens[startIndex + 2];
+        if (firstInlineToken.content) {
+          const calloutMatch = firstInlineToken.content.match(/^\[!(\w+)\]/);
+          if (calloutMatch) {
+            calloutType = calloutMatch[1].toLowerCase();
+            shouldRemoveCalloutMarker = true;
+
+          }
+        }
+      }
+      
+      // Now parse children normally
       const children: any[] = [];
       let i = startIndex + 1;
       
@@ -99,12 +117,23 @@ function parseToken(tokens: any[], startIndex: number): { node: ASTNode; nextInd
           i++;
         }
       }
+      
+      // Post-process: remove callout marker from first paragraph if needed
+      if (shouldRemoveCalloutMarker && children.length > 0 && children[0].type === 'paragraph' && children[0].children) {
+        const firstPara = children[0];
+        if (firstPara.children[0]?.type === 'text' && firstPara.children[0].value.startsWith('[!')) {
+          // Remove the first text node containing the callout marker
+          firstPara.children.shift();
+
+        }
+      }
 
       return {
         node: {
           type: 'blockquote',
+          calloutType,
           children
-        },
+        } as any,
         nextIndex: i + 1
       };
     }
@@ -161,26 +190,21 @@ function parseListItem(tokens: any[], startIndex: number): { node: any; nextInde
 function parseInlineContent(token: any): ASTNode[] {
   if (!token || !token.children) return [];
   
-  const nodes: ASTNode[] = [];
+  console.log('[parseInlineContent] Token content:', token.content);
+  console.log('[parseInlineContent] Children:', token.children?.map((c: any) => ({ type: c.type, content: c.content })));
   
-  for (const child of token.children) {
+  const nodes: ASTNode[] = [];
+  const processedIndices = new Set<number>();
+  
+  for (let idx = 0; idx < token.children.length; idx++) {
+    if (processedIndices.has(idx)) continue;
+    
+    const child = token.children[idx];
+    
     switch (child.type) {
       case 'text':
-        // Check if it's a keyword
-        const keywordMatch = child.content.match(/#(\w+)/);
-        if (keywordMatch) {
-          // Split text around keyword
-          const parts = child.content.split(/#(\w+)/);
-          for (let i = 0; i < parts.length; i++) {
-            if (i % 2 === 0 && parts[i]) {
-              nodes.push({ type: 'text', value: parts[i] });
-            } else if (i % 2 === 1 && parts[i]) {
-              nodes.push({ type: 'keyword', keyword: parts[i] });
-            }
-          }
-        } else {
-          nodes.push({ type: 'text', value: child.content });
-        }
+        // Parse text with keywords
+        nodes.push(...parseTextWithKeywords(child.content));
         break;
 
       case 'softbreak':
@@ -195,26 +219,30 @@ function parseInlineContent(token: any): ASTNode[] {
 
       case 'strong_open': {
         const contentNodes: ASTNode[] = [];
-        let i = token.children.indexOf(child) + 1;
+        let i = idx + 1;
         while (i < token.children.length && token.children[i].type !== 'strong_close') {
           if (token.children[i].type === 'text') {
             contentNodes.push({ type: 'text', value: token.children[i].content });
           }
+          processedIndices.add(i);
           i++;
         }
+        processedIndices.add(i); // Mark strong_close as processed
         nodes.push({ type: 'strong', children: contentNodes });
         break;
       }
 
       case 'em_open': {
         const contentNodes: ASTNode[] = [];
-        let i = token.children.indexOf(child) + 1;
+        let i = idx + 1;
         while (i < token.children.length && token.children[i].type !== 'em_close') {
           if (token.children[i].type === 'text') {
             contentNodes.push({ type: 'text', value: token.children[i].content });
           }
+          processedIndices.add(i);
           i++;
         }
+        processedIndices.add(i); // Mark em_close as processed
         nodes.push({ type: 'emphasis', children: contentNodes });
         break;
       }
@@ -223,17 +251,24 @@ function parseInlineContent(token: any): ASTNode[] {
         nodes.push({ type: 'code_inline', value: child.content });
         break;
 
+      case 'keyword':
+        // Handle keyword tokens created by markdown-it
+        nodes.push({ type: 'keyword', keyword: child.content });
+        break;
+
       case 'link_open': {
         const href = child.attrGet('href') || '';
         const title = child.attrGet('title') || undefined;
         const contentNodes: ASTNode[] = [];
-        let i = token.children.indexOf(child) + 1;
+        let i = idx + 1;
         while (i < token.children.length && token.children[i].type !== 'link_close') {
           if (token.children[i].type === 'text') {
             contentNodes.push({ type: 'text', value: token.children[i].content });
           }
+          processedIndices.add(i);
           i++;
         }
+        processedIndices.add(i); // Mark link_close as processed
         nodes.push({ type: 'link', href, title, children: contentNodes });
         break;
       }
@@ -248,5 +283,40 @@ function parseInlineContent(token: any): ASTNode[] {
     }
   }
   
+  return nodes;
+}
+
+/**
+ * Parse text content and extract keywords
+ */
+function parseTextWithKeywords(text: string): ASTNode[] {
+  console.log('[parseTextWithKeywords] Input text:', text);
+  const nodes: ASTNode[] = [];
+  const regex = /#(\w+)/g;
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    console.log('[parseTextWithKeywords] Found keyword:', match[1], 'at index:', match.index);
+    // Add text before keyword
+    if (match.index > lastIndex) {
+      nodes.push({ type: 'text', value: text.substring(lastIndex, match.index) });
+    }
+    // Add keyword
+    nodes.push({ type: 'keyword', keyword: match[1] });
+    lastIndex = regex.lastIndex;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    nodes.push({ type: 'text', value: text.substring(lastIndex) });
+  }
+  
+  // If no keywords found, return single text node
+  if (nodes.length === 0) {
+    nodes.push({ type: 'text', value: text });
+  }
+  
+  console.log('[parseTextWithKeywords] Output nodes:', nodes.length, 'nodes');
   return nodes;
 }

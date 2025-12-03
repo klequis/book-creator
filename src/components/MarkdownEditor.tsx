@@ -4,6 +4,7 @@ import { load } from '@tauri-apps/plugin-store';
 import { EditorView, basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
+import { languages } from '@codemirror/language-data';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { editorState } from '../stores/editorState';
 import './MarkdownEditor.css';
@@ -100,7 +101,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       doc: initialContent,
       extensions: [
         basicSetup,
-        markdown(),
+        markdown({ codeLanguages: languages }),
         oneDark,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {

@@ -96,6 +96,7 @@ export interface ListItemNode extends BaseASTNode {
 
 export interface BlockquoteNode extends BaseASTNode {
   type: 'blockquote';
+  calloutType?: string; // e.g., 'information', 'warning', 'note'
   children: ASTNode[];
 }
 
