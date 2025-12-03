@@ -26,5 +26,7 @@ echo "GTK_PATH: ${GTK_PATH:-<unset>}"
 echo "GIO_MODULE_DIR: ${GIO_MODULE_DIR:-<unset>}"
 echo ""
 
-# Run tauri dev with Node.js from fnm
-fnm use 22 && pnpm tauri dev
+# Load fnm and run tauri dev
+eval "$(fnm env --use-on-cd)"
+fnm use 22
+pnpm tauri dev

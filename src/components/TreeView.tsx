@@ -1,7 +1,7 @@
 import { Component, createSignal, Show, createEffect, onMount } from 'solid-js';
 import { open } from '@tauri-apps/plugin-dialog';
 import { load } from '@tauri-apps/plugin-store';
-import { bookStore, loadBook, closeBook } from '../stores/bookStore';
+import { bookStore, bookStoreActions } from '../stores/bookStore';
 import { editorState } from '../stores/editorState';
 import { Book } from './Book';
 import { RecentBooksList } from './RecentBooksList';
@@ -57,7 +57,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
       if (savedPath) {
         console.log('Restored book path:', savedPath);
         setBookPath(savedPath);
-        await loadBook(savedPath);
+        await bookStoreActions.loadBook(savedPath);
       }
       const savedZoom = await store.get<number>('treeZoom');
       if (savedZoom) {
@@ -75,7 +75,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
   createEffect(async () => {
     const path = bookPath();
     if (path && path !== bookStore.rootPath) {
-      await loadBook(path);
+      await bookStoreActions.loadBook(path);
       
       // Save the path
       try {
@@ -131,7 +131,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
     }
     
     // Close current book and open new one
-    closeBook();
+    bookStoreActions.closeBook();
     setBookPath(path);
   };
 
