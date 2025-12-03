@@ -11,7 +11,8 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test": "jest"
   },
   "license": "MIT",
   "dependencies": {
@@ -30,7 +31,11 @@
     "solid-markdown": "^2.1.1"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@tauri-apps/cli": "^2",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
     "vite-plugin-solid": "^2.11.0"
