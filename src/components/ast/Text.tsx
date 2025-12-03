@@ -1,6 +1,20 @@
-import { Component } from 'solid-js';
+import { Component, For } from 'solid-js';
 import type { TextNode } from '../../types/ast';
 
 export const Text: Component<{ node: TextNode }> = (props) => {
-  return <>{props.node.value}</>;
+  // Split on newlines and render with <br> tags
+  const parts = () => props.node.value.split('\n');
+  
+  return (
+    <>
+      <For each={parts()}>
+        {(part, index) => (
+          <>
+            {part}
+            {index() < parts().length - 1 && <br />}
+          </>
+        )}
+      </For>
+    </>
+  );
 };

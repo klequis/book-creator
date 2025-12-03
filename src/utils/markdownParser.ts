@@ -183,6 +183,16 @@ function parseInlineContent(token: any): ASTNode[] {
         }
         break;
 
+      case 'softbreak':
+        // Handle soft line breaks (single newline in markdown)
+        nodes.push({ type: 'text', value: '\n' });
+        break;
+
+      case 'hardbreak':
+        // Handle hard line breaks (two spaces + newline)
+        nodes.push({ type: 'text', value: '\n' });
+        break;
+
       case 'strong_open': {
         const contentNodes: ASTNode[] = [];
         let i = token.children.indexOf(child) + 1;
