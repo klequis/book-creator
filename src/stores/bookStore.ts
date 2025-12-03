@@ -8,6 +8,7 @@ import { load } from '@tauri-apps/plugin-store';
 import type { Book } from '../types';
 import { createBookStorage } from '../storage';
 import { showError, showSuccess } from '../utils/notifications';
+import { applyFileSystemChanges } from '../file-operations';
 
 export interface RecentBook {
   path: string;
@@ -132,43 +133,87 @@ export const bookStoreActions = {
 
   /**
    * Apply section updates from movement operations
+   * Automatically updates file system and saves book structure
    */
-  applySectionUpdates(updates: Array<{ id: string; level: 1 | 2 | 3 | 4; order: number; parentId?: string; oldFilePath: string; newFilePath: string; }>) {
-    if (!bookStore.book) return;
+  async applySectionUpdates(updates: Array<{ id: string; level: 1 | 2 | 3 | 4; order: number; parentId?: string; oldFilePath: string; newFilePath: string; }>) {
+    if (!bookStore.book || !bookStore.rootPath) return;
 
-    // Update all sections in the book structure
-    const applyToSections = (sections: any[]) => {
-      sections.forEach(section => {
-        const update = updates.find(u => u.id === section.id);
-        if (update) {
-          section.level = update.level;
-          section.order = update.order;
-          section.parentId = update.parentId;
-          section.filePath = update.newFilePath;
-        }
-      });
-    };
-
-    // Apply to all section arrays
-    if (bookStore.book.introduction) {
-      applyToSections(bookStore.book.introduction.sections);
-    }
-    if (bookStore.book.parts) {
-      bookStore.book.parts.forEach(part => {
-        applyToSections(part.sections);
-        part.chapters.forEach(chapter => {
-          applyToSections(chapter.sections);
+    try {
+      // Collect all sections for heading prefix calculation
+      const allSections: Array<{id: string, order: number, parentId?: string}> = [];
+      const collectSections = (sections: any[]) => {
+        sections.forEach(s => {
+          allSections.push({ id: s.id, order: s.order, parentId: s.parentId });
         });
-      });
-    }
-    bookStore.book.chapters.forEach(chapter => {
-      applyToSections(chapter.sections);
-    });
-    bookStore.book.appendices.forEach(appendix => {
-      applyToSections(appendix.sections);
-    });
+      };
 
-    this.markDirty();
+      if (bookStore.book.introduction) {
+        collectSections(bookStore.book.introduction.sections);
+      }
+      if (bookStore.book.parts) {
+        bookStore.book.parts.forEach(part => {
+          collectSections(part.sections);
+          part.chapters.forEach(chapter => {
+            collectSections(chapter.sections);
+          });
+        });
+      }
+      bookStore.book.chapters.forEach(chapter => {
+        collectSections(chapter.sections);
+      });
+      bookStore.book.appendices.forEach(appendix => {
+        collectSections(appendix.sections);
+      });
+
+      // Apply file system changes (rename files, update headings)
+      const updatesWithFullPaths = updates.map(u => ({
+        ...u,
+        oldFilePath: `${bookStore.rootPath}/${u.oldFilePath}`,
+        newFilePath: `${bookStore.rootPath}/${u.newFilePath}`
+      }));
+      
+      await applyFileSystemChanges(updatesWithFullPaths, allSections);
+
+      // Update all sections in the book structure
+      const applyToSections = (sections: any[]) => {
+        sections.forEach(section => {
+          const update = updates.find(u => u.id === section.id);
+          if (update) {
+            section.level = update.level;
+            section.order = update.order;
+            section.parentId = update.parentId;
+            section.filePath = update.newFilePath;
+          }
+        });
+      };
+
+      // Apply to all section arrays
+      if (bookStore.book.introduction) {
+        applyToSections(bookStore.book.introduction.sections);
+      }
+      if (bookStore.book.parts) {
+        bookStore.book.parts.forEach(part => {
+          applyToSections(part.sections);
+          part.chapters.forEach(chapter => {
+            applyToSections(chapter.sections);
+          });
+        });
+      }
+      bookStore.book.chapters.forEach(chapter => {
+        applyToSections(chapter.sections);
+      });
+      bookStore.book.appendices.forEach(appendix => {
+        applyToSections(appendix.sections);
+      });
+
+      // Auto-save the book structure
+      await this.saveBook();
+      
+    } catch (error) {
+      console.error('[BookStore] Error applying section updates:', error);
+      showError(`Failed to apply changes: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
   },
 
   async addToRecentBooks(path: string) {

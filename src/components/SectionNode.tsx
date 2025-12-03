@@ -36,44 +36,44 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
   };
 
   // Movement operation handlers
-  const handleOrderPlus = (e: MouseEvent) => {
+  const handleOrderPlus = async (e: MouseEvent) => {
     e.stopPropagation();
     try {
       const updates = orderPlus(props.section.id, props.allSections);
-      bookStoreActions.applySectionUpdates(updates);
+      await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Moved section up');
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Failed to move section');
     }
   };
 
-  const handleOrderMinus = (e: MouseEvent) => {
+  const handleOrderMinus = async (e: MouseEvent) => {
     e.stopPropagation();
     try {
       const updates = orderMinus(props.section.id, props.allSections);
-      bookStoreActions.applySectionUpdates(updates);
+      await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Moved section down');
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Failed to move section');
     }
   };
 
-  const handleLevelPlus = (e: MouseEvent) => {
+  const handleLevelPlus = async (e: MouseEvent) => {
     e.stopPropagation();
     try {
       const updates = levelPlus(props.section.id, props.allSections);
-      bookStoreActions.applySectionUpdates(updates);
+      await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Promoted section');
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Failed to promote section');
     }
   };
 
-  const handleLevelMinus = (e: MouseEvent) => {
+  const handleLevelMinus = async (e: MouseEvent) => {
     e.stopPropagation();
     try {
       const updates = levelMinus(props.section.id, props.allSections);
-      bookStoreActions.applySectionUpdates(updates);
+      await bookStoreActions.applySectionUpdates(updates);
       showSuccess('Demoted section');
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Failed to demote section');
