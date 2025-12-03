@@ -11,6 +11,7 @@ import './MarkdownEditor.css';
 interface MarkdownEditorProps {
   filePath: string | null;
   resourcesPath: string | null;
+  onFileSaved?: () => void;
 }
 
 export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
@@ -187,6 +188,7 @@ export const MarkdownEditor: Component<MarkdownEditorProps> = (props) => {
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
       editorState.setHasUnsavedChanges(false);
+      props.onFileSaved?.();
     } catch (error) {
       console.error('Failed to save file:', error);
       alert(`Failed to save: ${error}`);

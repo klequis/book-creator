@@ -12,12 +12,9 @@ interface CollapsibleContainerProps {
 export const CollapsibleContainer: Component<CollapsibleContainerProps> = (props) => {
   const [isExpanded, setIsExpanded] = createSignal(props.defaultExpanded ?? true);
 
-  const toggleExpanded = (e: MouseEvent) => {
+  const handleHeaderClick = (e: MouseEvent) => {
     e.stopPropagation();
     setIsExpanded(!isExpanded());
-  };
-
-  const handleLabelClick = () => {
     if (props.onClick) {
       props.onClick();
     }
@@ -25,15 +22,14 @@ export const CollapsibleContainer: Component<CollapsibleContainerProps> = (props
 
   return (
     <div class="collapsible-container">
-      <div class="collapsible-header">
+      <div class="collapsible-header" onClick={handleHeaderClick}>
         <button 
           class="collapse-toggle" 
-          onClick={toggleExpanded}
           aria-label={isExpanded() ? 'Collapse' : 'Expand'}
         >
           {isExpanded() ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
-        <div class="header-content" onClick={handleLabelClick}>
+        <div class="header-content">
           {props.icon && <span class="header-icon">{props.icon}</span>}
           <span class="header-label">{props.label}</span>
         </div>

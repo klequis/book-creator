@@ -17,6 +17,7 @@ md.use(markdownKeywordPlugin);
 interface MarkdownPreviewProps {
   filePath: string | null;
   resourcesPath: string | null;
+  fileRevision?: number;
 }
 
 export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
@@ -70,8 +71,8 @@ export const MarkdownPreview: Component<MarkdownPreviewProps> = (props) => {
   };
   
   const [content] = createResource(
-    () => [props.filePath, props.resourcesPath] as const,
-    async ([path, resourcesPath]) => {
+    () => [props.filePath, props.resourcesPath, props.fileRevision] as const,
+    async ([path, resourcesPath, _revision]) => {
       if (!path) return null;
       try {
         let markdown: string = await invoke('read_file', { path });

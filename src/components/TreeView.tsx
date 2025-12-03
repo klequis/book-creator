@@ -209,7 +209,7 @@ export const TreeView: Component<TreeViewProps> = (props) => {
         </Show>
       </div>
 
-      <div class="tree-content-wrapper" style={{ "font-size": `${zoom()}%` }}>
+      <div class="tree-content-wrapper" style={{ transform: `scale(${zoom() / 100})`, "transform-origin": "top left", width: `${10000 / zoom()}%` }}>
         <Show when={bookStore.book && !bookStore.loading}>
           <BookProvider rootPath={() => bookStore.rootPath}>
             <Book 
