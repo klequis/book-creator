@@ -29,31 +29,60 @@ html, body, #root {
   width: 100%;
 }
 
-.sidebar {
-  width: 300px;
-  min-width: 250px;
-  max-width: 500px;
-  border-right: 1px solid #e0e0e0;
-  background: #f9f9f9;
+/* Resizable panels */
+.sidebar-panel,
+.editor-panel,
+.preview-panel {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.main-content {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
+.sidebar-panel {
+  border-right: 1px solid #2d2d2d;
+  background: #1e1e1e;
 }
 
-.editor-pane {
-  flex: 1;
-  display: flex;
-  min-width: 0;
+.editor-panel {
   border-right: 1px solid #2d2d2d;
 }
 
-.preview-pane {
-  flex: 1;
-  display: flex;
-  min-width: 0;
+/* Resize handles */
+.resize-handle {
+  position: relative;
+  width: 8px;
+  background: #2d2d2d;
+  cursor: col-resize;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.resize-handle:hover,
+.resize-handle[data-active] {
+  background: #404040;
+}
+
+.resize-handle[data-dragging] {
+  background: #4a9eff;
+}
+
+/* Visual indicator on handle */
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.resize-handle:hover::after,
+.resize-handle[data-active]::after {
+  background: rgba(255, 255, 255, 0.3);
 }
 
