@@ -14,6 +14,12 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
 
   // Indentation based on level
   const indent = () => `${(props.section.level - 1) * 20}px`;
+  
+  // Extract filename from path for display
+  const fileName = () => {
+    const parts = props.section.filePath.split('/');
+    return parts[parts.length - 1].replace('.md', '');
+  };
 
   return (
     <div class="section-node" style={{ 'margin-left': indent() }}>
@@ -23,6 +29,7 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
       >
         <span class="section-level">S{props.section.level}</span>
         <span class="section-order">({props.section.order})</span>
+        <span class="section-name">{fileName()}</span>
       </div>
 
       {/* Render children recursively */}
