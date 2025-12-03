@@ -65,3 +65,18 @@ S: {
 **Section Ordering:**
 - Siblings (sections with same parent) are ordered using the `order` field
 - `order` represents position among siblings: 1, 2, 3, etc.
+
+## File Structure Rules
+
+**One Heading Per File:**
+- Each section file contains exactly one heading
+- The heading level matches the section's level (S1=`#`, S2=`##`, S3=`###`, S4=`####`)
+- No additional headings are allowed within the file
+- This enables clean reordering without content fragmentation
+
+**Prefix Numbering:**
+- "prefix" refers to the number part of files, folders, and headings
+- File prefix: `02-` in filename `02-getting-started.md`
+- Heading prefix: `1.2` in heading `## 1.2 Getting Started`
+- File prefix and heading prefix must stay synchronized
+- All files and folders use 2-digit zero-padded prefixes (01-99)
