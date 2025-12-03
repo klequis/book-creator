@@ -74,10 +74,15 @@
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.15s ease;
+  position: relative;
 }
 
 .section-header:hover {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+.section-header:hover .section-controls {
+  opacity: 1;
 }
 
 .section-level {
@@ -98,6 +103,42 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+}
+
+.section-controls {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.control-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.control-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .section-children {

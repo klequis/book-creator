@@ -130,6 +130,47 @@ export const bookStoreActions = {
     setBookStore('dirty', true);
   },
 
+  /**
+   * Apply section updates from movement operations
+   */
+  applySectionUpdates(updates: Array<{ id: string; level: 1 | 2 | 3 | 4; order: number; parentId?: string; oldFilePath: string; newFilePath: string; }>) {
+    if (!bookStore.book) return;
+
+    // Update all sections in the book structure
+    const applyToSections = (sections: any[]) => {
+      sections.forEach(section => {
+        const update = updates.find(u => u.id === section.id);
+        if (update) {
+          section.level = update.level;
+          section.order = update.order;
+          section.parentId = update.parentId;
+          section.filePath = update.newFilePath;
+        }
+      });
+    };
+
+    // Apply to all section arrays
+    if (bookStore.book.introduction) {
+      applyToSections(bookStore.book.introduction.sections);
+    }
+    if (bookStore.book.parts) {
+      bookStore.book.parts.forEach(part => {
+        applyToSections(part.sections);
+        part.chapters.forEach(chapter => {
+          applyToSections(chapter.sections);
+        });
+      });
+    }
+    bookStore.book.chapters.forEach(chapter => {
+      applyToSections(chapter.sections);
+    });
+    bookStore.book.appendices.forEach(appendix => {
+      applyToSections(appendix.sections);
+    });
+
+    this.markDirty();
+  },
+
   async addToRecentBooks(path: string) {
     const books = bookStore.recentBooks;
     
