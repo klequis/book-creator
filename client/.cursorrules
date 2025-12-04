@@ -1,0 +1,71 @@
+# Project Rules for AI Assistant
+
+## Editing suggestions
+- **Always include matching closing syntax**: When suggesting opening parentheses `(`, brackets `[`, braces `{`, quotes `"` or `'`, JSX/HTML tags `<tag>`, always include the matching closing syntax `)`, `]`, `}`, `"` or `'`, `</tag>` in the same suggestion
+- All routes, i.e., files under /routes must have one `export default`.
+
+## UI 
+- **Styling**: Use Tailwind CSS exclusively, avoid inline styles
+- Use colors in /doc/colors.md 
+- Wrap all compoents in `<Component>`
+
+## Code Style & Conventions
+- **TypeScript**: Use TypeScript for all new files
+- **Components**: Prefer functional components in SolidJS
+- **Naming**: Use kebab-case for files, PascalCase for components
+- Maintain consistent indentation (2 spaces)
+- Use semantic commit messages
+- Always use `export default function` for /routes/**/*
+
+## File Organization
+- **Components** → `/src/components/`
+- Use absolute imports with `~/` prefix
+- Group related functionality in feature folders
+- Keep components in their respective files
+- all file names are lower case with kebab case
+
+## Form Development
+- **Always use the `form-input` class for input fields**
+- Use existing Alert, Button, and Label components.
+- Follow established error handling patterns
+- Import custom components from their respective files
+
+## Development Practices
+- Always test changes by running the dev server
+- Build the project before considering a task complete
+- Follow the established pattern for error handling and logging
+- **Always use pnpm** for package management (never npm or yarn)
+- Always import custom components from their respective files
+
+## SolidJS Instructions
+- When iterating inside JSX, always use `<For>`
+- In JSX use `<Show>`, `<Switch>` & `<Match>` for conditional logic.
+
+### SolidJS actions (calling pattern)
+
+- When calling Solid `action()` helpers from client code, await the action call directly; do NOT call the returned value. Example:
+	- Correct: `const res = await resetData('users')`
+	- Incorrect: `await resetData('users')()`
+
+- When wiring a server-form to an action, use the `.with()` helper to generate the form endpoint:
+	- Example: `<form action={resetData.with('users')} method="post">...</form>`
+
+- Assistant rule: prefer using `await actionName(args)` for explicit client-side calls and `.with()` for server-side form submissions. Log or return the action result for testability.
+
+## Client testing
+- Use @solidjs/testing-library
+
+## Don't Do
+- ❌ **Use Bootstrap classes** (project is migrating away from Bootstrap)
+- ❌ **Create inline styles**
+- ❌ **Repeat long Tailwind class strings**
+- ❌ Modify core Tailwind configuration without asking
+- ❌ Use inline styles instead of CSS classes
+- ❌ Never use Array.map in the JSX
+- ❌ Use solid-testing-library
+- ❌ Don't make changes to or use as a reference/exampl any file with the prefex 'xx.' or 'zz', or any file inside a folder with the 'xx.' or 'zz.' prefix.
+- ❌ Never destructure component props.
+
+## Additional info in /doc
+- color system: colors.md
+- buttons; buttons.md

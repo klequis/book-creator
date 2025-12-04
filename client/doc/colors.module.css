@@ -1,0 +1,26 @@
+.swatchContainer {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.swatch {
+  padding: 1rem;
+  /* border-radius: 0.375rem; */
+  padding: 0.2rem 1rem;
+  margin-bottom: 1rem;
+  width: 200px;
+  color: var(--white);
+}
+
+.tintContainer {
+  display: flex;
+}
+
+.tintBox {
+  width: 150px;
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* border: 1px solid var(--gray-medium); */
+}
