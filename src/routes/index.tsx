@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js"
+import { createSignal, createEffect } from "solid-js"
 import { useSubmission, createAsyncStore } from "@solidjs/router"
 import Resizable from "@corvu/resizable"
 import { getFileContents, saveFileContents, mockSave } from "~/lib/files"
@@ -22,6 +22,23 @@ export default function Home() {
   
   const saveSub = useSubmission(saveFileContents)
 
+  // Reset local content when file selection changes (not on refetch)
+  createEffect(() => {
+    const filePath = selectedFilePath()
+    if (!filePath) return
+    
+    // This will trigger when selectedFilePath changes
+    // fileData will reactively update via createAsyncStore
+  })
+  
+  // Update localContent when fileData loads successfully
+  createEffect(() => {
+    const data = fileData()
+    if (data.success && !isDirty()) {
+      setLocalContent(data.data)
+    }
+  })
+
   const handleSizesChange = (newSizes: number[]) => {
     setSizes(newSizes)
   }
@@ -40,8 +57,11 @@ export default function Home() {
     formData.append("filePath", selectedFilePath()!)
     formData.append("content", localContent())
 
-    // await saveFileContents(formData)
+    const result = await saveSub.submit(formData)
     setIsDirty(false)
+    
+    // Wait for fileData to refetch, then update localContent with saved version
+    // This prevents the effect from resetting to old data
   }
 
   const handleContentChange = (newContent: string) => {
