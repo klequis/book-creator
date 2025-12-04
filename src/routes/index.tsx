@@ -1,18 +1,18 @@
 import { Title } from "@solidjs/meta"
-import { createSignal, For, Show, Suspense, Switch, Match } from "solid-js"
+import { createSignal, Show, Suspense, Switch, Match } from "solid-js"
 import { createAsyncStore, useSubmission } from "@solidjs/router"
-import { getDirectoryContents, getFileContents, saveFileContents, type FileEntry } from "~/lib/files"
-
-type ExpandedDirs = Record<string, boolean>
+import { getFileContents, saveFileContents } from "~/lib/files"
+import { loadBookStructure } from "~/stores/bookStore"
+import { Book } from "~/components/Book"
 
 export default function Home() {
-  // Load root directory using createAsyncStore
-  const rootFiles = createAsyncStore(() => getDirectoryContents("."), {
-    initialValue: { success: true, data: [] as FileEntry[], error: null }
+  // Load book structure
+  const bookData = createAsyncStore(() => loadBookStructure(), {
+    initialValue: { success: false, book: null, rootPath: null, error: null }
   })
+  
+  console.log("bookData:", bookData())
 
-  const [expandedDirs, setExpandedDirs] = createSignal<ExpandedDirs>({})
-  const [dirContents, setDirContents] = createSignal<Record<string, any>>({})
   const [currentFile, setCurrentFile] = createSignal<string | null>(null)
   const [content, setContent] = createSignal("")
   const [isDirty, setIsDirty] = createSignal(false)
@@ -20,38 +20,17 @@ export default function Home() {
   // Track save submission
   const saveSub = useSubmission(saveFileContents)
 
-  const toggleDirectory = async (dir: FileEntry) => {
-    const isExpanded = expandedDirs()[dir.path]
-    
-    if (!isExpanded) {
-      // Load directory contents using createAsyncStore
-      const dirStore = createAsyncStore(() => getDirectoryContents(dir.path), {
-        initialValue: { success: true, data: [] as FileEntry[], error: null }
-      })
-      setDirContents(prev => ({ ...prev, [dir.path]: dirStore }))
-      setExpandedDirs(prev => ({ ...prev, [dir.path]: true }))
-    } else {
-      // Collapse directory
-      setExpandedDirs(prev => ({ ...prev, [dir.path]: false }))
-    }
-  }
-
-  const handleFileClick = async (file: FileEntry) => {
-    if (file.isDirectory) {
-      await toggleDirectory(file)
-      return
-    }
-
+  const handleFileSelect = async (filePath: string) => {
     if (isDirty()) {
       const confirm = window.confirm("You have unsaved changes. Continue?")
       if (!confirm) return
     }
 
     try {
-      const result = await getFileContents(file.path)
+      const result = await getFileContents(filePath)
       if (result.success) {
         setContent(result.data)
-        setCurrentFile(file.path)
+        setCurrentFile(filePath)
         setIsDirty(false)
       } else {
         console.error("Failed to read file:", result.error)
@@ -82,47 +61,6 @@ export default function Home() {
     setIsDirty(true)
   }
 
-  const renderFileTree = (entries: FileEntry[], level = 0) => {
-    return (
-      <For each={entries}>
-        {file => (
-          <>
-            <div
-              style={{
-                padding: "5px",
-                "padding-left": `${10 + level * 15}px`,
-                cursor: "pointer",
-                "background-color":
-                  currentFile() === file.path ? "#e0e0e0" : "transparent",
-                "border-radius": "3px"
-              }}
-              onClick={() => handleFileClick(file)}
-            >
-              {file.isDirectory ? (
-                expandedDirs()[file.path] ? "📂" : "📁"
-              ) : "📄"}{" "}
-              {file.name}
-            </div>
-            <Show when={file.isDirectory && expandedDirs()[file.path]}>
-              <Suspense fallback={<div style={{"padding-left": `${25 + level * 15}px`, color: "#999"}}>Loading...</div>}>
-                <Switch>
-                  <Match when={dirContents()[file.path]?.()?.success}>
-                    {renderFileTree(dirContents()[file.path]?.()?.data || [], level + 1)}
-                  </Match>
-                  <Match when={dirContents()[file.path]?.()?.error}>
-                    <div style={{"padding-left": `${25 + level * 15}px`, color: "#ff6b6b"}}>
-                      Error: {dirContents()[file.path]?.()?.error}
-                    </div>
-                  </Match>
-                </Switch>
-              </Suspense>
-            </Show>
-          </>
-        )}
-      </For>
-    )
-  }
-
   return (
     <main style={{ display: "flex", height: "100vh" }}>
       <Title>Book Creator</Title>
@@ -136,15 +74,19 @@ export default function Home() {
           overflow: "auto"
         }}
       >
-        <h3 style={{ margin: "0 0 10px 0" }}>Files</h3>
-        <Suspense fallback={<div style={{ color: "#999" }}>Loading files...</div>}>
+        <h3 style={{ margin: "0 0 10px 0" }}>Book Structure</h3>
+        <Suspense fallback={<div style={{ color: "#999" }}>Loading book...</div>}>
           <Switch>
-            <Match when={rootFiles().success}>
-              {renderFileTree(rootFiles().data)}
+            <Match when={bookData().success && bookData().book}>
+              <Book 
+                book={bookData().book!} 
+                onFileSelect={handleFileSelect}
+                rootPath={bookData().rootPath!}
+              />
             </Match>
-            <Match when={rootFiles().error}>
+            <Match when={bookData().error}>
               <div style={{ color: "#ff6b6b" }}>
-                Error: {rootFiles().error}
+                Error: {bookData().error}
               </div>
             </Match>
           </Switch>
