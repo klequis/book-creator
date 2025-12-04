@@ -1,47 +1,35 @@
 import { Title } from "@solidjs/meta"
-import { createSignal, For, Show } from "solid-js"
-import { readDir, readFile, writeFile } from "~/lib/files"
-
-type FileEntry = {
-  name: string
-  isDirectory: boolean
-  path: string
-}
+import { createSignal, For, Show, Suspense, Switch, Match } from "solid-js"
+import { createAsyncStore, useSubmission } from "@solidjs/router"
+import { getDirectoryContents, getFileContents, saveFileContents, type FileEntry } from "~/lib/files"
 
 type ExpandedDirs = Record<string, boolean>
 
 export default function Home() {
-  const [files, setFiles] = createSignal<FileEntry[]>([])
+  // Load root directory using createAsyncStore
+  const rootFiles = createAsyncStore(() => getDirectoryContents("."), {
+    initialValue: { success: true, data: [] as FileEntry[], error: null }
+  })
+
   const [expandedDirs, setExpandedDirs] = createSignal<ExpandedDirs>({})
-  const [dirContents, setDirContents] = createSignal<Record<string, FileEntry[]>>({})
+  const [dirContents, setDirContents] = createSignal<Record<string, any>>({})
   const [currentFile, setCurrentFile] = createSignal<string | null>(null)
   const [content, setContent] = createSignal("")
   const [isDirty, setIsDirty] = createSignal(false)
 
-  // Load root directory on mount
-  const loadFiles = async () => {
-    try {
-      const entries = await readDir(".")
-      setFiles(entries)
-    } catch (err) {
-      console.error("Failed to load files:", err)
-    }
-  }
-
-  loadFiles()
+  // Track save submission
+  const saveSub = useSubmission(saveFileContents)
 
   const toggleDirectory = async (dir: FileEntry) => {
     const isExpanded = expandedDirs()[dir.path]
     
     if (!isExpanded) {
-      // Load directory contents
-      try {
-        const entries = await readDir(dir.path)
-        setDirContents(prev => ({ ...prev, [dir.path]: entries }))
-        setExpandedDirs(prev => ({ ...prev, [dir.path]: true }))
-      } catch (err) {
-        console.error("Failed to load directory:", err)
-      }
+      // Load directory contents using createAsyncStore
+      const dirStore = createAsyncStore(() => getDirectoryContents(dir.path), {
+        initialValue: { success: true, data: [] as FileEntry[], error: null }
+      })
+      setDirContents(prev => ({ ...prev, [dir.path]: dirStore }))
+      setExpandedDirs(prev => ({ ...prev, [dir.path]: true }))
     } else {
       // Collapse directory
       setExpandedDirs(prev => ({ ...prev, [dir.path]: false }))
@@ -60,23 +48,32 @@ export default function Home() {
     }
 
     try {
-      const fileContent = await readFile(file.path)
-      setContent(fileContent)
-      setCurrentFile(file.path)
-      setIsDirty(false)
+      const result = await getFileContents(file.path)
+      if (result.success) {
+        setContent(result.data)
+        setCurrentFile(file.path)
+        setIsDirty(false)
+      } else {
+        console.error("Failed to read file:", result.error)
+      }
     } catch (err) {
       console.error("Failed to read file:", err)
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (e: Event) => {
+    e.preventDefault()
     if (!currentFile()) return
 
-    try {
-      await writeFile(currentFile()!, content())
+    const formData = new FormData()
+    formData.append("filePath", currentFile()!)
+    formData.append("content", content())
+
+    const result = await saveFileContents(formData)
+    if (result.success) {
       setIsDirty(false)
-    } catch (err) {
-      console.error("Failed to save file:", err)
+    } else {
+      console.error("Failed to save file:", result.errors)
     }
   }
 
@@ -107,7 +104,18 @@ export default function Home() {
               {file.name}
             </div>
             <Show when={file.isDirectory && expandedDirs()[file.path]}>
-              {renderFileTree(dirContents()[file.path] || [], level + 1)}
+              <Suspense fallback={<div style={{"padding-left": `${25 + level * 15}px`, color: "#999"}}>Loading...</div>}>
+                <Switch>
+                  <Match when={dirContents()[file.path]?.()?.success}>
+                    {renderFileTree(dirContents()[file.path]?.()?.data || [], level + 1)}
+                  </Match>
+                  <Match when={dirContents()[file.path]?.()?.error}>
+                    <div style={{"padding-left": `${25 + level * 15}px`, color: "#ff6b6b"}}>
+                      Error: {dirContents()[file.path]?.()?.error}
+                    </div>
+                  </Match>
+                </Switch>
+              </Suspense>
             </Show>
           </>
         )}
@@ -129,7 +137,18 @@ export default function Home() {
         }}
       >
         <h3 style={{ margin: "0 0 10px 0" }}>Files</h3>
-        {renderFileTree(files())}
+        <Suspense fallback={<div style={{ color: "#999" }}>Loading files...</div>}>
+          <Switch>
+            <Match when={rootFiles().success}>
+              {renderFileTree(rootFiles().data)}
+            </Match>
+            <Match when={rootFiles().error}>
+              <div style={{ color: "#ff6b6b" }}>
+                Error: {rootFiles().error}
+              </div>
+            </Match>
+          </Switch>
+        </Suspense>
       </div>
 
       {/* Editor */}
@@ -151,6 +170,11 @@ export default function Home() {
                   ● Modified
                 </span>
               </Show>
+              <Show when={saveSub.pending}>
+                <span style={{ "margin-left": "10px", color: "#4CAF50" }}>
+                  💾 Saving...
+                </span>
+              </Show>
             </Show>
             <Show when={!currentFile()}>
               <span style={{ color: "#999" }}>No file selected</span>
@@ -158,11 +182,11 @@ export default function Home() {
           </div>
           <button
             onClick={handleSave}
-            disabled={!currentFile() || !isDirty()}
+            disabled={!currentFile() || !isDirty() || saveSub.pending}
             style={{
               padding: "5px 15px",
-              cursor: currentFile() && isDirty() ? "pointer" : "not-allowed",
-              opacity: currentFile() && isDirty() ? 1 : 0.5
+              cursor: currentFile() && isDirty() && !saveSub.pending ? "pointer" : "not-allowed",
+              opacity: currentFile() && isDirty() && !saveSub.pending ? 1 : 0.5
             }}
           >
             Save

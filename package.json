@@ -14,6 +14,11 @@
     "start": "electron .",
     "test": "jest"
   },
+  "pnpm": {
+    "execConfig": {
+      "shell": "/bin/bash -l"
+    }
+  },
   "main": "./electron/main.js",
   "license": "MIT",
   "dependencies": {
@@ -25,8 +30,8 @@
     "@codemirror/view": "^6.38.8",
     "@corvu/resizable": "^0.2.5",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.14.10",
-    "@solidjs/start": "^1.0.13",
+    "@solidjs/router": "^0.15.3",
+    "@solidjs/start": "^1.2.0",
     "codemirror": "^6.0.2",
     "highlight.js": "^11.11.1",
     "lucide-solid": "^0.555.0",
