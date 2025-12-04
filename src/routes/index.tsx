@@ -8,16 +8,20 @@ type FileEntry = {
   path: string
 }
 
+type ExpandedDirs = Record<string, boolean>
+
 export default function Home() {
   const [files, setFiles] = createSignal<FileEntry[]>([])
+  const [expandedDirs, setExpandedDirs] = createSignal<ExpandedDirs>({})
+  const [dirContents, setDirContents] = createSignal<Record<string, FileEntry[]>>({})
   const [currentFile, setCurrentFile] = createSignal<string | null>(null)
   const [content, setContent] = createSignal("")
   const [isDirty, setIsDirty] = createSignal(false)
 
-  // Load sample directory on mount
+  // Load root directory on mount
   const loadFiles = async () => {
     try {
-      const entries = await readDir("./sample-book")
+      const entries = await readDir(".")
       setFiles(entries)
     } catch (err) {
       console.error("Failed to load files:", err)
@@ -26,8 +30,29 @@ export default function Home() {
 
   loadFiles()
 
+  const toggleDirectory = async (dir: FileEntry) => {
+    const isExpanded = expandedDirs()[dir.path]
+    
+    if (!isExpanded) {
+      // Load directory contents
+      try {
+        const entries = await readDir(dir.path)
+        setDirContents(prev => ({ ...prev, [dir.path]: entries }))
+        setExpandedDirs(prev => ({ ...prev, [dir.path]: true }))
+      } catch (err) {
+        console.error("Failed to load directory:", err)
+      }
+    } else {
+      // Collapse directory
+      setExpandedDirs(prev => ({ ...prev, [dir.path]: false }))
+    }
+  }
+
   const handleFileClick = async (file: FileEntry) => {
-    if (file.isDirectory) return
+    if (file.isDirectory) {
+      await toggleDirectory(file)
+      return
+    }
 
     if (isDirty()) {
       const confirm = window.confirm("You have unsaved changes. Continue?")
@@ -60,6 +85,36 @@ export default function Home() {
     setIsDirty(true)
   }
 
+  const renderFileTree = (entries: FileEntry[], level = 0) => {
+    return (
+      <For each={entries}>
+        {file => (
+          <>
+            <div
+              style={{
+                padding: "5px",
+                "padding-left": `${10 + level * 15}px`,
+                cursor: "pointer",
+                "background-color":
+                  currentFile() === file.path ? "#e0e0e0" : "transparent",
+                "border-radius": "3px"
+              }}
+              onClick={() => handleFileClick(file)}
+            >
+              {file.isDirectory ? (
+                expandedDirs()[file.path] ? "📂" : "📁"
+              ) : "📄"}{" "}
+              {file.name}
+            </div>
+            <Show when={file.isDirectory && expandedDirs()[file.path]}>
+              {renderFileTree(dirContents()[file.path] || [], level + 1)}
+            </Show>
+          </>
+        )}
+      </For>
+    )
+  }
+
   return (
     <main style={{ display: "flex", height: "100vh" }}>
       <Title>Book Creator</Title>
@@ -74,22 +129,7 @@ export default function Home() {
         }}
       >
         <h3 style={{ margin: "0 0 10px 0" }}>Files</h3>
-        <For each={files()}>
-          {file => (
-            <div
-              style={{
-                padding: "5px",
-                cursor: file.isDirectory ? "default" : "pointer",
-                "background-color":
-                  currentFile() === file.path ? "#e0e0e0" : "transparent",
-                "border-radius": "3px"
-              }}
-              onClick={() => handleFileClick(file)}
-            >
-              {file.isDirectory ? "📁" : "📄"} {file.name}
-            </div>
-          )}
-        </For>
+        {renderFileTree(files())}
       </div>
 
       {/* Editor */}

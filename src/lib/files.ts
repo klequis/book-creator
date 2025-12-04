@@ -1,7 +1,10 @@
 "use server"
 
 import { readdir, readFile as fsReadFile, writeFile as fsWriteFile } from "fs/promises"
-import { join } from "path"
+import { join, resolve } from "path"
+
+// Base path for the example book
+const BOOK_BASE_PATH = resolve(process.cwd(), "book-ex/manuscript-2-3-4")
 
 export type FileEntry = {
   name: string
@@ -10,18 +13,21 @@ export type FileEntry = {
 }
 
 export async function readDir(dirPath: string): Promise<FileEntry[]> {
-  const entries = await readdir(dirPath, { withFileTypes: true })
+  const fullPath = dirPath === "." ? BOOK_BASE_PATH : join(BOOK_BASE_PATH, dirPath)
+  const entries = await readdir(fullPath, { withFileTypes: true })
   return entries.map(entry => ({
     name: entry.name,
     isDirectory: entry.isDirectory(),
-    path: join(dirPath, entry.name)
+    path: dirPath === "." ? entry.name : join(dirPath, entry.name)
   }))
 }
 
 export async function readFile(filePath: string): Promise<string> {
-  return await fsReadFile(filePath, "utf-8")
+  const fullPath = join(BOOK_BASE_PATH, filePath)
+  return await fsReadFile(fullPath, "utf-8")
 }
 
 export async function writeFile(filePath: string, content: string): Promise<void> {
-  await fsWriteFile(filePath, content, "utf-8")
+  const fullPath = join(BOOK_BASE_PATH, filePath)
+  await fsWriteFile(fullPath, content, "utf-8")
 }
