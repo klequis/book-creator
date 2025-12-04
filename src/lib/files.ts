@@ -1,6 +1,4 @@
-"use server"
-
-import { query, action } from "@solidjs/router"
+import { query, action, reload } from "@solidjs/router"
 import { readdir, readFile as fsReadFile, writeFile as fsWriteFile } from "fs/promises"
 import { join, resolve } from "path"
 
@@ -88,9 +86,16 @@ export const getFileContents = query(
   "getFileContents"
 )
 
+// Mock save action for testing (no file I/O)
+export const mockSave = action(async () => {
+  "use server"
+  console.log("Mock save called")
+  return { success: true }
+}, "mockSave")
+
 // Action to save file contents
 export const saveFileContents = action(
-  async (formData: FormData): Promise<ActionResponse> => {
+  async (formData: FormData) => {
     "use server"
     
     try {
@@ -108,11 +113,8 @@ export const saveFileContents = action(
       const fullPath = join(BOOK_BASE_PATH, filePath)
       await fsWriteFile(fullPath, content, "utf-8")
       
-      return {
-        success: true,
-        data: null,
-        errors: null
-      }
+      // Revalidate the file contents query for this file
+      return reload({ revalidate: getFileContents.keyFor(filePath) })
     } catch (e) {
       console.error("Failed to write file:", e)
       return {

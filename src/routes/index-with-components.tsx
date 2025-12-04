@@ -1,9 +1,10 @@
-import { createSignal } from "solid-js"
+import { createSignal, Show } from "solid-js"
+import { Title } from "@solidjs/meta"
 import { useSubmission, createAsyncStore } from "@solidjs/router"
 import Resizable from "@corvu/resizable"
-import { getFileContents, saveFileContents, mockSave } from "~/lib/files"
-import { EditorPanel } from "~/components/EditorPanel"
+import { getFileContents, saveFileContents } from "~/lib/files"
 import { BookTreePanel } from "~/components/BookTreePanel"
+import { EditorPanel } from "~/components/EditorPanel"
 
 export default function Home() {
   const [sizes, setSizes] = createSignal<number[]>([0.2, 0.8])
@@ -23,9 +24,21 @@ export default function Home() {
   const saveSub = useSubmission(saveFileContents)
 
   const handleSizesChange = (newSizes: number[]) => {
+    console.log("Sizes changed:", newSizes)
     setSizes(newSizes)
   }
   
+  const handleFileSelect = (filePath: string) => {
+    if (isDirty()) {
+      const confirm = window.confirm("You have unsaved changes. Continue?")
+      if (!confirm) return
+    }
+
+    setSelectedFilePath(filePath)
+    setIsDirty(false)
+  }
+  
+  // Update local content when file data loads
   const content = () => {
     if (fileData().success && !isDirty()) {
       return fileData().data
@@ -40,7 +53,7 @@ export default function Home() {
     formData.append("filePath", selectedFilePath()!)
     formData.append("content", localContent())
 
-    // await saveFileContents(formData)
+    await saveFileContents(formData)
     setIsDirty(false)
   }
 
@@ -50,10 +63,16 @@ export default function Home() {
   }
 
   return (
-    <div style={{ height: "100vh", width: "100vw", overflow: "hidden" }}>
-      <h1 style={{ padding: "10px", margin: 0, background: "#f0f0f0" }}>
-        Home Page (Main Route)
-      </h1>
+    <main style={{ height: "100vh", width: "100vw", overflow: "hidden" }}>
+      <Title>Book Creator</Title>
+      
+      <div style={{ padding: "10px", background: "#f0f0f0", display: "flex", gap: "20px", "align-items": "center" }}>
+        <h1 style={{ margin: 0 }}>Home Page (Main Route)</h1>
+        <nav style={{ display: "flex", gap: "10px" }}>
+          <a href="/" style={{ padding: "5px 10px", background: "#007acc", color: "white", "text-decoration": "none", "border-radius": "4px" }}>Home</a>
+          <a href="/test-resizable" style={{ padding: "5px 10px", background: "#007acc", color: "white", "text-decoration": "none", "border-radius": "4px" }}>Test Page</a>
+        </nav>
+      </div>
       
       <Resizable
         orientation="horizontal"
@@ -74,7 +93,8 @@ export default function Home() {
             padding: "10px"
           }}
         >
-          <BookTreePanel onFileSelect={(filePath) => setSelectedFilePath(filePath)} />
+          {/* <BookTreePanel onFileSelect={handleFileSelect} /> */}
+          <h1>Book Tree Panel</h1>
         </Resizable.Panel>
 
         {/* Handle */}
@@ -99,16 +119,17 @@ export default function Home() {
             "flex-direction": "column"
           }}
         >
-          <EditorPanel
+          {/* <EditorPanel
             currentFile={selectedFilePath()}
             content={content()}
             isDirty={isDirty()}
-            isSaving={saveSub.pending}
+            isSaving={saveSub.pending ?? false}
             onContentChange={handleContentChange}
             onSave={handleSave}
-          />
+          /> */}
+          <h1>Editor Panel</h1>
         </Resizable.Panel>
       </Resizable>
-    </div>
+    </main>
   )
 }
