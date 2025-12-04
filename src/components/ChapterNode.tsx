@@ -7,8 +7,6 @@ import './CollapsibleContainer.css';
 
 interface ChapterNodeProps {
   chapter: Chapter;
-  onFileSelect: (filePath: string) => void;
-  rootPath: string;
 }
 
 export const ChapterNode: Component<ChapterNodeProps> = (props) => {
@@ -33,8 +31,6 @@ export const ChapterNode: Component<ChapterNodeProps> = (props) => {
           <SectionNode 
             section={section} 
             allSections={props.chapter.sections}
-            onFileSelect={props.onFileSelect}
-            rootPath={props.rootPath}
           />
         )}
       </For>

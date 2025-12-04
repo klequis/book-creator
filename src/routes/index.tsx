@@ -4,6 +4,7 @@ import { createAsyncStore, useSubmission } from "@solidjs/router"
 import { getFileContents, saveFileContents } from "~/lib/files"
 import { loadBookStructure } from "~/stores/bookStore"
 import { Book } from "~/components/Book"
+import { BookProvider } from "~/contexts/BookContext"
 
 export default function Home() {
   // Load book structure
@@ -78,11 +79,13 @@ export default function Home() {
         <Suspense fallback={<div style={{ color: "#999" }}>Loading book...</div>}>
           <Switch>
             <Match when={bookData().success && bookData().book}>
-              <Book 
-                book={bookData().book!} 
-                onFileSelect={handleFileSelect}
+              <BookProvider 
+                book={bookData().book!}
                 rootPath={bookData().rootPath!}
-              />
+                onFileSelect={handleFileSelect}
+              >
+                <Book />
+              </BookProvider>
             </Match>
             <Match when={bookData().error}>
               <div style={{ color: "#ff6b6b" }}>

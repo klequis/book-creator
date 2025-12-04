@@ -1,15 +1,16 @@
 import { Component, For, Show } from 'solid-js';
 import { File } from 'lucide-solid';
 import type { Section } from '~/types';
+import { useBook } from '~/contexts/BookContext';
 
 interface SectionNodeProps {
   section: Section;
   allSections: Section[];
-  onFileSelect: (filePath: string) => void;
-  rootPath: string;
 }
 
 export const SectionNode: Component<SectionNodeProps> = (props) => {
+  const [bookState, , bookActions] = useBook();
+  
   // Find direct children of this section
   const children = () => 
     props.allSections.filter(s => s.parentId === props.section.id);
@@ -21,7 +22,7 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
   };
   
   // Construct full path relative to book root
-  const fullPath = () => `${props.rootPath}/${props.section.filePath}`;
+  const fullPath = () => `${bookState.rootPath}/${props.section.filePath}`;
 
   return (
     <div>
@@ -33,7 +34,7 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
           "align-items": "center", 
           gap: "5px" 
         }}
-        onClick={() => props.onFileSelect(fullPath())}
+        onClick={() => bookActions.onFileSelect(fullPath())}
       >
         <File size={14} />
         <span>S{props.section.level}</span>
@@ -48,8 +49,6 @@ export const SectionNode: Component<SectionNodeProps> = (props) => {
               <SectionNode 
                 section={child} 
                 allSections={props.allSections}
-                onFileSelect={props.onFileSelect}
-                rootPath={props.rootPath}
               />
             )}
           </For>
