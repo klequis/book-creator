@@ -1,5 +1,6 @@
 import { createContext, useContext, ParentComponent } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
+import { useNavigate } from "@solidjs/router";
 import type { Book } from "~/types";
 
 interface BookState {
@@ -9,7 +10,7 @@ interface BookState {
 }
 
 interface BookActions {
-  onFileSelect: (filePath: string) => void;
+  selectFile: (filePath: string) => void;
 }
 
 type BookContextValue = [
@@ -23,8 +24,9 @@ const BookContext = createContext<BookContextValue>();
 export const BookProvider: ParentComponent<{
   book: Book;
   rootPath: string;
-  onFileSelect: (filePath: string) => void;
 }> = (props) => {
+  const navigate = useNavigate();
+  
   const [state, setState] = createStore<BookState>({
     book: props.book,
     rootPath: props.rootPath,
@@ -32,9 +34,9 @@ export const BookProvider: ParentComponent<{
   });
 
   const actions: BookActions = {
-    onFileSelect: (filePath: string) => {
+    selectFile: (filePath: string) => {
       setState("selectedFile", filePath);
-      props.onFileSelect(filePath);
+      navigate(`/edit/${encodeURIComponent(filePath)}`);
     }
   };
 

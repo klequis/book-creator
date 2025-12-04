@@ -72,7 +72,7 @@ export const BookTree: Component = () => {
                   <For each={chapter.sections}>
                     {(section) => (
                       <div
-                        onClick={() => actions.onFileSelect(section.filePath)}
+                        onClick={() => actions.selectFile(section.filePath)}
                         style={{
                           padding: "4px 8px",
                           cursor: "pointer",

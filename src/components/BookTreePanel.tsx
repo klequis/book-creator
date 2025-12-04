@@ -4,11 +4,7 @@ import { loadBookStructure } from "~/stores/bookStore"
 import { BookProvider } from "~/contexts/BookContext"
 import { BookTree } from "./BookTree"
 
-interface BookTreePanelProps {
-  onFileSelect: (filePath: string) => void
-}
-
-export const BookTreePanel: Component<BookTreePanelProps> = (props) => {
+export const BookTreePanel: Component = () => {
   const bookData = createAsyncStore(() => loadBookStructure(), {
     initialValue: { success: false, error: "" }
   })
@@ -23,7 +19,6 @@ export const BookTreePanel: Component<BookTreePanelProps> = (props) => {
               <BookProvider 
                 book={bookData().book!}
                 rootPath={bookData().rootPath!}
-                onFileSelect={props.onFileSelect}
               >
                 <BookTree />
               </BookProvider>
