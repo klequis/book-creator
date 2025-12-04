@@ -9,7 +9,7 @@ import { BookProvider } from "~/contexts/BookContext"
 export default function Home() {
   // Load book structure
   const bookData = createAsyncStore(() => loadBookStructure(), {
-    initialValue: { success: false, book: null, rootPath: null, error: null }
+    initialValue: { success: false, error: "" }
   })
   
   console.log("bookData:", bookData())
