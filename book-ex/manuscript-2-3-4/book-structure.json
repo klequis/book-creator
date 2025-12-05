@@ -1,143 +1,128 @@
 {
+  "title": "SolidStart Routing Guide",
+  "introduction": null,
+  "parts": [],
   "chapters": [
     {
-      "id": "afeb-1eb4-b1aa-d4bc",
+      "id": "02-getting-started",
+      "title": "Getting Started",
       "sections": [
         {
-          "id": "1e6d-f87b-7b77-24e1",
-          "level": 2,
-          "filePath": "02 Getting Started/02-01-00 What we will build.md",
-          "order": 1
+          "id": "02-00-00",
+          "title": "Chapter Title Page",
+          "filePath": "02 Getting Started/02-00-00 Chapter Title Page.md"
         },
         {
-          "id": "86de-9cd9-09ef-9566",
-          "level": 1,
-          "filePath": "02 Getting Started/02-00-00 Chapter Title Page.md",
-          "order": 2
+          "id": "02-01-00",
+          "title": "What we will build",
+          "filePath": "02 Getting Started/02-01-00 What we will build.md"
         },
         {
-          "id": "83a9-895d-a688-2d03",
-          "level": 2,
-          "filePath": "02 Getting Started/02-02-00-00 Open and Run the Starter Project.md",
-          "order": 2
+          "id": "02-02-00-00",
+          "title": "Open and Run the Starter Project",
+          "filePath": "02 Getting Started/02-02-00-00 Open and Run the Starter Project.md"
         }
       ]
     },
     {
-      "id": "f257-c2cf-db61-b5ef",
+      "id": "03-routing-setup",
+      "title": "Routing Setup",
       "sections": [
         {
-          "id": "720a-16a4-76ee-a33d",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-01-00 Install Solid Router.md",
-          "order": 1
+          "id": "03-00-00",
+          "title": "Chapter Title Page",
+          "filePath": "03 Routing Setup/03-00-00 Chapter Title Page.md"
         },
         {
-          "id": "b7f9-61d7-4d55-3ad7",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-02-00 Configuring Routing.md",
-          "order": 2
+          "id": "03-01-00",
+          "title": "Install Solid Router",
+          "filePath": "03 Routing Setup/03-01-00 Install Solid Router.md"
         },
         {
-          "id": "2e6b-323b-0f10-25b0",
-          "level": 1,
-          "filePath": "03 Routing Setup/03-00-00 Chapter Title Page.md",
-          "order": 3
+          "id": "03-02-00",
+          "title": "Configuring Routing",
+          "filePath": "03 Routing Setup/03-02-00 Configuring Routing.md"
         },
         {
-          "id": "1f4e-488c-8f82-c1cb",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-03-00 The FileRoutes Component.md",
-          "order": 3
+          "id": "03-02",
+          "title": "The Router Component",
+          "filePath": "03 Routing Setup/03.02 The Router Component.md"
         },
         {
-          "id": "39f7-09f4-2884-a00b",
-          "level": 1,
-          "filePath": "03 Routing Setup/03.02 The Router Component.md",
-          "order": 3
+          "id": "03-03-00",
+          "title": "The FileRoutes Component",
+          "filePath": "03 Routing Setup/03-03-00 The FileRoutes Component.md"
         },
         {
-          "id": "a934-cfc1-54e7-5c2d",
-          "level": 1,
-          "filePath": "03 Routing Setup/03.03 Adding a Root Layout.md",
-          "order": 3
+          "id": "03-03",
+          "title": "Adding a Root Layout",
+          "filePath": "03 Routing Setup/03.03 Adding a Root Layout.md"
         },
         {
-          "id": "82ff-ff76-4ee6-1e89",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-05-00 Reducing Repetitive Code.md",
-          "order": 5
+          "id": "03-05-00-suspense",
+          "title": "The Suspense Component",
+          "filePath": "03 Routing Setup/03-05-00 The Suspense Component.md"
         },
         {
-          "id": "6ac1-fa25-05c8-607c",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-05-00 The Suspense Component.md",
-          "order": 5
+          "id": "03-05-00-reducing",
+          "title": "Reducing Repetitive Code",
+          "filePath": "03 Routing Setup/03-05-00 Reducing Repetitive Code.md"
         },
         {
-          "id": "2810-3400-29db-055e",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-06-00 Adding the Root Route.md",
-          "order": 6
+          "id": "03-06-00",
+          "title": "Adding the Root Route",
+          "filePath": "03 Routing Setup/03-06-00 Adding the Root Route.md"
         },
         {
-          "id": "411d-3523-ab3b-c5f4",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-07-00 Exploring the FileRoutes Component.md",
-          "order": 7
+          "id": "03-07-00-exploring",
+          "title": "Exploring the FileRoutes Component",
+          "filePath": "03 Routing Setup/03-07-00 Exploring the FileRoutes Component.md"
         },
         {
-          "id": "423e-bb72-135a-5165",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-07-00 Reducing Repetitive Code.md",
-          "order": 7
+          "id": "03-07-00-reducing",
+          "title": "Reducing Repetitive Code",
+          "filePath": "03 Routing Setup/03-07-00 Reducing Repetitive Code.md"
         },
         {
-          "id": "34a9-2b67-1e4a-e559",
-          "level": 2,
-          "filePath": "03 Routing Setup/03-08-00 Adding a Catch-all Route.md",
-          "order": 8
+          "id": "03-08-00",
+          "title": "Adding a Catch-all Route",
+          "filePath": "03 Routing Setup/03-08-00 Adding a Catch-all Route.md"
         }
       ]
     },
     {
-      "id": "fa26-49f3-e320-795c",
+      "id": "04-static-routes",
+      "title": "Static Routes",
       "sections": [
         {
-          "id": "8b9c-b9fb-a491-f09f",
-          "level": 2,
-          "filePath": "04 Static Routes/04-01-00 A Filename as a Route Segment.md",
-          "order": 1
+          "id": "04-00-00",
+          "title": "Chapter Title Page",
+          "filePath": "04 Static Routes/04-00-00 Chapter Title Page.md"
         },
         {
-          "id": "54dd-50e5-d58a-e731",
-          "level": 2,
-          "filePath": "04 Static Routes/04-02-00 A Directory as a Route Segment.md",
-          "order": 2
+          "id": "04-01-00",
+          "title": "A Filename as a Route Segment",
+          "filePath": "04 Static Routes/04-01-00 A Filename as a Route Segment.md"
         },
         {
-          "id": "e573-1920-83ca-9a0a",
-          "level": 2,
-          "filePath": "04 Static Routes/04-03-00 Multiple Routes in a Single Directory.md",
-          "order": 3
+          "id": "04-02-00",
+          "title": "A Directory as a Route Segment",
+          "filePath": "04 Static Routes/04-02-00 A Directory as a Route Segment.md"
         },
         {
-          "id": "cc87-2d1e-f056-65d6",
-          "level": 1,
-          "filePath": "04 Static Routes/04-00-00 Chapter Title Page.md",
-          "order": 4
+          "id": "04-03-00",
+          "title": "Multiple Routes in a Single Directory",
+          "filePath": "04 Static Routes/04-03-00 Multiple Routes in a Single Directory.md"
         },
         {
-          "id": "8d21-b78b-08ff-b754",
-          "level": 2,
-          "filePath": "04 Static Routes/04-04-00 What Gets Rendered.md",
-          "order": 4
+          "id": "04-04-00",
+          "title": "What Gets Rendered",
+          "filePath": "04 Static Routes/04-04-00 What Gets Rendered.md"
         },
         {
-          "id": "7891-b390-5c1c-5a61",
-          "level": 2,
-          "filePath": "04 Static Routes/04-05-00 Renaming Index.md",
-          "order": 5
+          "id": "04-05-00",
+          "title": "Renaming Index",
+          "filePath": "04 Static Routes/04-05-00 Renaming Index.md"
         }
       ]
     }

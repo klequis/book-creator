@@ -1,10 +1,13 @@
-import { Component, For, createSignal, Show } from "solid-js"
+import { Component, For, createSignal, Show, createEffect } from "solid-js"
 import { useBook } from "~/contexts/BookContext"
 
 export const BookTree: Component = () => {
   const [bookState, , actions] = useBook()
   const [expandedChapters, setExpandedChapters] = createSignal<Set<string>>(new Set())
 
+  createEffect(() => {
+    console.log("bookState", bookState.book.chapters[0].id)
+  })
   const toggleChapter = (chapterId: string) => {
     setExpandedChapters(prev => {
       const next = new Set(prev)

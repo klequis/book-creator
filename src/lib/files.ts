@@ -98,9 +98,17 @@ export const saveFileContents = action(
   async (formData: FormData) => {
     "use server"
     
+    // Add delay for testing
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
     try {
       const filePath = formData.get("filePath") as string
       const content = formData.get("content") as string
+      
+      console.log("=== SAVE ACTION ===")
+      console.log("filePath:", filePath)
+      console.log("content length:", content?.length)
+      console.log("content preview:", content?.substring(0, 100))
       
       if (!filePath) {
         return {
@@ -111,7 +119,23 @@ export const saveFileContents = action(
       }
       
       const fullPath = join(BOOK_BASE_PATH, filePath)
+      console.log("Writing to:", fullPath)
+
+      // get file length before write
+      const preWriteStat = await fsReadFile(fullPath, "utf-8")
+      console.log("Pre-write file length:", preWriteStat.length)
+
       await fsWriteFile(fullPath, content, "utf-8")
+
+      // get file length after write
+      const postWriteStat = await fsReadFile(fullPath, "utf-8")
+      console.log("Post-write file length:", postWriteStat.length)
+
+      if (postWriteStat.length === postWriteStat.length) {
+        console.log("Write successful")
+      } else {
+        console.log("Write may have failed: lengths match")
+      }
       
       // Revalidate the file contents query for this file
       return reload({ revalidate: getFileContents.keyFor(filePath) })
